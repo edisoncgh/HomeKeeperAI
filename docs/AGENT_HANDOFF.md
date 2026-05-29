@@ -6,7 +6,7 @@ M1.1 已完成：Next.js 15.5 + React 19 + TypeScript + TailwindCSS + Prisma 6 +
 
 ## Last Completed Work
 
-- Commit: 无。Git 仓库已初始化，但尚未创建首次提交。
+- Commit: `8cb0c3f feat: 初始化 M1.1 基础工程`。
 - 主要新增：`app/`、`lib/prisma.ts`、`prisma/schema.prisma`、`prisma/migrations/20260530023000_init/migration.sql`、`scripts/`、`tests/smoke.test.ts`、`package.json`、`package-lock.json`。
 - 文档已更新：`docs/CONTEXT.md`、`docs/TASKS.md`、`docs/TECH_PLAN.md`、`docs/QUALITY.md`、`docs/DECISIONS.md`、`docs/DEPLOYMENT.md`。
 - 记忆已更新：`.memory/context.md`、`.memory/index.md`、`.memory/knowledge.md`、`.memory/sessions/20260530-024731.md`。
