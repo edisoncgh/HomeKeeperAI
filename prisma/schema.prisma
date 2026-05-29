@@ -1,0 +1,117 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           Int          @id @default(autoincrement())
+  username     String       @unique
+  passwordHash String
+  displayName  String?
+  role         UserRole     @default(MEMBER)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  itemRecords  ItemRecord[]
+}
+
+model Item {
+  id            Int          @id @default(autoincrement())
+  name          String
+  description   String?
+  quantity      Int          @default(1)
+  categoryId    Int?
+  locationId    Int?
+  imageUrl      String?
+  expiryDate    DateTime?
+  purchaseDate  DateTime?
+  purchasePrice Float?
+  notes         String?
+  status        ItemStatus   @default(NORMAL)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  category      Category?    @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  location      Location?    @relation(fields: [locationId], references: [id], onDelete: SetNull)
+  tags          Tag[]        @relation("ItemTags")
+  records       ItemRecord[]
+  alerts        Alert[]
+}
+
+model Category {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
+  icon        String?
+  color       String?
+  description String?
+  createdAt   DateTime @default(now())
+  items       Item[]
+}
+
+model Location {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
+  icon        String?
+  color       String?
+  description String?
+  createdAt   DateTime @default(now())
+  items       Item[]
+}
+
+model Tag {
+  id    Int    @id @default(autoincrement())
+  name  String @unique
+  items Item[] @relation("ItemTags")
+}
+
+model ItemRecord {
+  id             Int              @id @default(autoincrement())
+  itemId         Int
+  type           ItemRecordType   @default(IN)
+  quantityChange Int
+  operatorId     Int?
+  notes          String?
+  createdAt      DateTime         @default(now())
+  item           Item             @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  user           User?            @relation(fields: [operatorId], references: [id], onDelete: SetNull)
+}
+
+model Alert {
+  id        Int         @id @default(autoincrement())
+  itemId    Int
+  type      AlertType
+  status    AlertStatus @default(PENDING)
+  createdAt DateTime    @default(now())
+  item      Item        @relation(fields: [itemId], references: [id], onDelete: Cascade)
+}
+
+enum UserRole {
+  ADMIN
+  MEMBER
+}
+
+enum ItemStatus {
+  NORMAL
+  EXPIRING
+  EXPIRED
+  LOW_STOCK
+}
+
+enum ItemRecordType {
+  IN
+  OUT
+  ADJUST
+}
+
+enum AlertType {
+  EXPIRING
+  EXPIRED
+  LOW_STOCK
+}
+
+enum AlertStatus {
+  PENDING
+  RESOLVED
+}
