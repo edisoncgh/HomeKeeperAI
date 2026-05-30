@@ -15,6 +15,7 @@
 - `sessions/20260531-021956.md` — 完成 M1.5 review 收口，修复函数长度、认证校验、初始化事务和文档一致性问题。 [`tags: #m1 #review #refactor #docs #verification`]
 - `sessions/20260531-022705.md` — 完成 M2.0 规划与文档对齐，明确分类/位置、物品 API、物品 UI、搜索筛选排序和 M2 收口切片。 [`tags: #m2 #planning #docs #handoff #vibe-coding`]
 - `sessions/20260531-024738.md` — 确认 1.0 发布路线按 M2-M5 完整推进，不插入提前 NAS 试用版或 M3-lite。 [`tags: #roadmap #decision #m2 #m5 #release`]
+- `sessions/20260531-025408.md` — 记录 M3 是关键 AI 里程碑，进入前必须专项规划 Prompt、LLM API、响应解析和失败兜底。 [`tags: #m3 #ai #planning #prompt #decision`]
 
 ## Notes
 

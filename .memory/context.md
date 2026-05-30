@@ -34,6 +34,7 @@ M1.5 已完成并验证通过：`npm run test`、`npm run typecheck`、`npm run 
 - M2 已拆为 M2.1 分类/位置、M2.2 物品 API、M2.3 物品 UI、M2.4 搜索筛选排序、M2.5 收口复查。
 - 用户已确认不插入提前 NAS 试用版；继续按 M2-M5 完整路线推进，M5 后作为家庭 NAS 1.0 发布候选。
 - AI 拍照智能入库仍是核心定位，但按 M3 完整实现，不做临时 M3-lite。
+- 进入 M3 前必须先做 AI 专项规划：功能边界、LLM API、System Prompt、结构化响应、解析校验、失败兜底、隐私和成本。
 - M2.1 先实现分类和位置，避免物品表单缺少外键数据。
 - M2 删除分类或位置时不删除物品，关联字段按 Prisma `onDelete: SetNull` 置空。
 - M2 物品创建时自动创建 `ItemRecord(type=IN)`；出库和库存调整暂缓。
