@@ -7,13 +7,13 @@
 ACTIVE
 
 ## Current Goal
-完成 M1.4 用户认证系统，并准备进入 M2 核心物品、分类、位置功能。
+M1.5 收口修复已完成，准备规划 M2 核心物品、分类、位置功能。
 
 ## Current Slice
-M1.4 用户认证系统已完成；下一切片为 M2 核心功能。
+M1.5 Review 修复与文档对齐已完成；下一切片为 M2 规划。
 
 ## Last Known Good State
-已新增首次管理员初始化、用户名密码登录、HttpOnly Cookie 会话、当前用户接口和受保护页面；`npm run test`、`npm run typecheck`、`npm run lint`、`npm run build`、`npm run db:check` 均通过；临时 SQLite 库端到端 API 验证通过。
+M1.5 已拆分超长 UI 函数、加强登录输入校验、用事务包裹管理员初始化，并同步 README、docs 与 `.memory`。`npm run test`、`npm run typecheck`、`npm run lint`、`npm run build`、`npm run db:check` 均通过。
 
 ## Active Files
 - `package.json`
@@ -24,43 +24,14 @@ M1.4 用户认证系统已完成；下一切片为 M2 核心功能。
 - `app/layout.tsx`
 - `app/page.tsx`
 - `app/ui/page.tsx`
-- `app/setup/page.tsx`
-- `app/login/page.tsx`
 - `app/api/auth/setup/route.ts`
-- `app/api/auth/login/route.ts`
-- `app/api/auth/logout/route.ts`
-- `app/api/users/me/route.ts`
 - `components/auth/`
 - `components/layout/app-shell.tsx`
-- `components/layout/index.ts`
-- `lib/auth/password.ts`
-- `lib/auth/session.ts`
 - `lib/auth/validation.ts`
-- `lib/auth/current-user.ts`
-- `lib/api/response.ts`
-- `lib/navigation.ts`
-- `tests/navigation.test.ts`
-- `tests/auth-password.test.ts`
-- `tests/auth-session.test.ts`
 - `tests/auth-validation.test.ts`
-- `lib/prisma.ts`
-- `prisma/schema.prisma`
-- `prisma/migrations/20260530023000_init/migration.sql`
-- `scripts/check-db.ts`
-- `scripts/patch-readlink.cjs`
-- `scripts/push-db.mjs`
-- `scripts/run-next.mjs`
-- `tests/smoke.test.ts`
-- `tests/class-names.test.ts`
-- `lib/class-names.ts`
-- `components/ui/button.tsx`
-- `components/ui/input.tsx`
-- `components/ui/card.tsx`
-- `components/ui/tag.tsx`
-- `components/ui/index.ts`
-- `.gitignore`
+- `Readme.md`
 - `docs/TASKS.md`
-- `docs/TECH_PLAN.md`
+- `docs/DATA_MODEL.md`
 - `docs/QUALITY.md`
 - `docs/AGENT_HANDOFF.md`
 
@@ -75,17 +46,17 @@ M1.4 用户认证系统已完成；下一切片为 M2 核心功能。
 - M1.4 使用 `crypto.scrypt` 哈希密码，使用 HMAC 签名 HttpOnly Cookie 会话。
 - 生产环境必须配置 `AUTH_SECRET`；开发环境未配置时使用进程内临时密钥。
 - 依赖 Cookie 或数据库状态的页面已显式 `force-dynamic`。
+- 保留 `CLAUDE.md` 中函数不超过 50 行规则；M1.5 正在按该规则收口。
+- 2026-05-31 复查时 `.next/trace` 曾被残留 Node 进程锁定，停止占用 3000 端口的 dev server 并清理 `.next` 后 `npm run build` 已恢复。
 
 ## Current Problem / Blocker
 - 无阻塞。
 
 ## Next Action
-- 提交 M1.4 代码和 `.memory` 更新；下一步确认 M2 核心功能切片顺序。
+- 提交 M1.5 收口修复；随后规划 M2 切片。
 
 ## Verification Status
 - `npm run test`、`npm run typecheck`、`npm run lint`、`npm run build`、`npm run db:check` 均通过。
-- dev server 访问验证：`/setup` 返回 200，`/api/auth/setup` 返回 `needsSetup=true`，`/login` 返回 200。
-- 临时 SQLite 库端到端 API 验证：初始化管理员 201、当前用户 200、退出登录 200；临时库已删除。
 
 ## Relevant Docs
 - `docs/CONTEXT.md`

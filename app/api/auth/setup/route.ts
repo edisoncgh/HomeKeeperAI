@@ -11,33 +11,40 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const userCount = await prisma.user.count();
-  if (userCount > 0) {
-    return apiError("管理员已初始化，请直接登录。", 409);
-  }
-
   const parsed = parseSetupInput(await request.json().catch(() => ({})));
   if (!parsed.ok) {
     return apiError(parsed.message, 400);
   }
 
-  const user = await prisma.user.create({
-    data: {
-      displayName: parsed.data.displayName,
-      passwordHash: await hashPassword(parsed.data.password),
-      role: "ADMIN",
-      username: parsed.data.username
-    },
-    select: {
-      displayName: true,
-      id: true,
-      role: true,
-      username: true
+  const passwordHash = await hashPassword(parsed.data.password);
+  const result = await prisma.$transaction(async (transaction) => {
+    const userCount = await transaction.user.count();
+    if (userCount > 0) {
+      return null;
     }
+
+    return transaction.user.create({
+      data: {
+        displayName: parsed.data.displayName,
+        passwordHash,
+        role: "ADMIN",
+        username: parsed.data.username
+      },
+      select: {
+        displayName: true,
+        id: true,
+        role: true,
+        username: true
+      }
+    });
   });
 
-  const cookieStore = await cookies();
-  cookieStore.set(SESSION_COOKIE_NAME, createSessionToken(user), getSessionCookieOptions());
+  if (!result) {
+    return apiError("管理员已初始化，请直接登录。", 409);
+  }
 
-  return apiOk({ user }, 201);
+  const cookieStore = await cookies();
+  cookieStore.set(SESSION_COOKIE_NAME, createSessionToken(result), getSessionCookieOptions());
+
+  return apiOk({ user: result }, 201);
 }

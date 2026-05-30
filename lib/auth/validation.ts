@@ -17,6 +17,7 @@ type ParseResult<T> = { data: T; ok: true } | { message: string; ok: false };
 
 const USERNAME_PATTERN = /^[a-z0-9_-]{3,32}$/;
 const MIN_PASSWORD_LENGTH = 8;
+const MAX_PASSWORD_LENGTH = 128;
 
 export function parseLoginInput(input: AuthInput): ParseResult<ParsedLoginInput> {
   const username = normalizeUsername(input.username);
@@ -26,6 +27,10 @@ export function parseLoginInput(input: AuthInput): ParseResult<ParsedLoginInput>
     return { message: "请输入用户名和密码。", ok: false };
   }
 
+  if (!isValidUsername(username) || !isValidPasswordLength(password, 1)) {
+    return { message: "请输入有效的用户名和密码。", ok: false };
+  }
+
   return { data: { password, username }, ok: true };
 }
 
@@ -33,12 +38,12 @@ export function parseSetupInput(input: AuthInput): ParseResult<ParsedSetupInput>
   const username = normalizeUsername(input.username);
   const password = normalizePassword(input.password);
 
-  if (!USERNAME_PATTERN.test(username)) {
+  if (!isValidUsername(username)) {
     return { message: "用户名需为 3-32 位字母、数字、下划线或短横线。", ok: false };
   }
 
-  if (password.length < MIN_PASSWORD_LENGTH) {
-    return { message: "密码至少需要 8 位。", ok: false };
+  if (!isValidPasswordLength(password, MIN_PASSWORD_LENGTH)) {
+    return { message: "密码需为 8-128 位。", ok: false };
   }
 
   return {
@@ -66,4 +71,12 @@ function normalizeDisplayName(value: unknown) {
 
   const displayName = value.trim();
   return displayName ? displayName : null;
+}
+
+function isValidUsername(username: string) {
+  return USERNAME_PATTERN.test(username);
+}
+
+function isValidPasswordLength(password: string, minimumLength: number) {
+  return password.length >= minimumLength && password.length <= MAX_PASSWORD_LENGTH;
 }

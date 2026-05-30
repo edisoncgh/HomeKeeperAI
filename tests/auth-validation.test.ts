@@ -28,5 +28,9 @@ describe("auth input validation", () => {
       message: "请输入用户名和密码。",
       ok: false
     });
+    expect(parseLoginInput({ password: "password", username: "中文用户" })).toMatchObject({
+      message: "请输入有效的用户名和密码。",
+      ok: false
+    });
   });
 });

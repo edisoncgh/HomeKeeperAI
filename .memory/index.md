@@ -12,6 +12,7 @@
 - `sessions/20260530-204044.md` — 完成 M1.2 基础 UI 组件库和 /ui 示例页，并通过 lint/typecheck/test/build/dev 访问验证。 [`tags: #m1 #ui #frontend #verification`]
 - `sessions/20260530-205554.md` — 完成 M1.3 响应式布局框架，新增 AppShell、主导航配置和导航行为测试。 [`tags: #m1 #layout #frontend #tdd #verification`]
 - `sessions/20260530-215456.md` — 完成 M1.4 用户认证系统，新增本地管理员初始化、Cookie 会话和认证页面。 [`tags: #m1 #auth #security #frontend #tdd #verification`]
+- `sessions/20260531-021956.md` — 完成 M1.5 review 收口，修复函数长度、认证校验、初始化事务和文档一致性问题。 [`tags: #m1 #review #refactor #docs #verification`]
 
 ## Notes
 

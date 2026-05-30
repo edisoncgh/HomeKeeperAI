@@ -14,6 +14,7 @@
 - M1.2 已建立 `components/ui` 基础组件库：Button、Input、Card、Tag；示例页为 `/ui`。
 - M1.3 已建立 `components/layout/AppShell` 响应式布局框架：移动端底部导航、平板/PC 左侧侧边栏、主内容区。
 - M1.4 已建立本地认证：首次管理员初始化、用户名密码登录、HttpOnly Cookie 会话、当前用户接口和基础角色。
+- M1.5 已完成 review 收口：保留 50 行函数规范，拆分超长 UI 函数，加强登录校验，用事务加固首次管理员初始化，并修正文档一致性。
 - 本地 SQLite 开发库位于 `data/dev.db`，`data/` 被 Git 忽略。
 
 ## Conventions
@@ -29,6 +30,7 @@
 - 应用主导航配置集中在 `lib/navigation.ts`；当前仅暴露已存在页面 `/` 和 `/ui`，避免导航到未实现路由。
 - 密码使用 Node `crypto.scrypt` 加随机盐哈希；会话 token 使用 HMAC 签名并写入 HttpOnly Cookie。
 - 生产环境必须配置 `AUTH_SECRET`；依赖 Cookie 或数据库状态的页面必须 `force-dynamic`。
+- 如果 `npm run build` 因 `.next/trace` EPERM 失败，先检查残留 dev server 是否占用 3000 端口并清理 `.next` 后重跑。
 
 ## User Preferences
 
@@ -47,3 +49,4 @@
 - **2026-05-30**: M1.2 基础 UI 组件库完成。原因：为后续物品录入、筛选、预警和设置页面提供统一控件。
 - **2026-05-30**: M1.3 响应式布局框架完成。原因：为后续认证、物品管理和预警页面提供统一跨端导航外壳。
 - **2026-05-30**: M1.4 用户认证系统完成。原因：为后续核心数据功能提供本地访问控制和当前用户上下文。
+- **2026-05-31**: M1.5 review 收口完成。原因：进入 M2 前清理 M1 review 发现的代码规范、认证边界和文档一致性问题。
