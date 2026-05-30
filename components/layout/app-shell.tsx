@@ -28,6 +28,11 @@ export function AppShell({ children }: AppShellProps) {
   const pathname = usePathname();
   const activeItem = getActiveNavigationItem(pathname);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const isAuthPage = pathname === "/login" || pathname === "/setup";
+
+  if (isAuthPage) {
+    return <main className="min-h-[100dvh] bg-app-background px-4 py-6">{children}</main>;
+  }
 
   return (
     <div className="min-h-screen bg-app-background text-text-primary">

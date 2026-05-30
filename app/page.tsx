@@ -1,6 +1,10 @@
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, ShieldCheck } from "lucide-react";
+import { LogoutButton } from "@/components/auth";
 import { Card } from "@/components/ui";
+import { requireCurrentUser } from "@/lib/auth/current-user";
+
+export const dynamic = "force-dynamic";
 
 const statusItems = [
   { label: "工程框架", value: "Next.js App Router" },
@@ -8,7 +12,9 @@ const statusItems = [
   { label: "布局层", value: "移动底栏 / 折叠侧栏" }
 ];
 
-export default function HomePage() {
+export default async function HomePage() {
+  const user = await requireCurrentUser();
+
   return (
     <section className="mx-auto flex max-w-5xl flex-col gap-6">
       <div>
@@ -36,6 +42,21 @@ export default function HomePage() {
           </Card>
         ))}
       </div>
+
+      <Card className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-start gap-3">
+          <ShieldCheck aria-hidden className="mt-1 text-primary" size={20} />
+          <div>
+            <p className="text-sm font-semibold">
+              {user.displayName ?? user.username} 已登录
+            </p>
+            <p className="mt-1 text-sm leading-6 text-text-secondary">
+              当前角色：{user.role === "ADMIN" ? "管理员" : "成员"}
+            </p>
+          </div>
+        </div>
+        <LogoutButton />
+      </Card>
     </section>
   );
 }

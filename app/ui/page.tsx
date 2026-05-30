@@ -1,5 +1,8 @@
 import { AlertTriangle, Archive, CheckCircle2, PackagePlus, Search } from "lucide-react";
 import { Button, Card, CardDescription, CardHeader, CardTitle, Input, Tag } from "@/components/ui";
+import { requireCurrentUser } from "@/lib/auth/current-user";
+
+export const dynamic = "force-dynamic";
 
 const tagExamples = [
   { label: "正常", tone: "success" as const },
@@ -8,7 +11,9 @@ const tagExamples = [
   { label: "厨房", tone: "neutral" as const }
 ];
 
-export default function UiPreviewPage() {
+export default async function UiPreviewPage() {
+  await requireCurrentUser();
+
   return (
     <section className="mx-auto grid max-w-6xl gap-5 lg:grid-cols-[minmax(0,1fr)_340px]">
       <div className="flex flex-col gap-5">
