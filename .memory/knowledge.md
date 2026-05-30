@@ -9,7 +9,7 @@
 - 技术栈决策：React + Next.js + TypeScript + TailwindCSS；Next.js API Routes；SQLite + Prisma；LLM 使用 OpenAI 兼容 API，可接 OpenAI、Ollama 或自定义 Base URL。
 - 重要边界：`docs/` 是操作真相，`.memory/` 是历史记忆，Git 是回滚边界。
 - Git 仓库已于 2026-05-30 初始化，但尚未创建首次提交。
-- `.gitignore` 允许 `docs/`、`.memory/`、`CLAUDE.md`、`AGENTS.md` 被 Git 跟踪，便于交接文档和项目记忆进入回滚边界。
+- 用户于 2026-05-30 要求 `docs/`、`CLAUDE.md`、`AGENTS.md` 不再由 Git 跟踪；本地仍保留这些文件，`.memory/` 仍被跟踪。
 - M1.1 已建立 Next.js 15.5 + React 19 + TypeScript + TailwindCSS + Prisma 6 + SQLite + Vitest 基础工程。
 - 本地 SQLite 开发库位于 `data/dev.db`，`data/` 被 Git 忽略。
 
@@ -36,3 +36,4 @@
 - **2026-05-30**: 将 `docs/CONTEXT.md` 调整为轻量项目上下文，并拆分 `DOMAIN.md`、`DECISIONS.md`、`API.md`、`DATA_MODEL.md`、`DESIGN_SYSTEM.md`、`QUALITY.md`、`DEPLOYMENT.md`。原因：符合 handoff-driven-development 的文档职责边界。
 - **2026-05-30**: M1.1 基础工程完成。原因：为后续 UI、认证、CRUD 和 AI 功能提供可运行、可验证的工程底座。
 - **2026-05-30**: 保留 wasm SWC/readlink patch 与 Prisma SQLite fallback。原因：当前 Windows/M 盘沙箱环境存在原生 SWC 加载和 Prisma schema engine 写库问题。
+- **2026-05-30**: 按用户要求将 `docs/`、`CLAUDE.md`、`AGENTS.md` 加入 `.gitignore` 并从 Git 索引移除。原因：用户希望这些项目不进入 Git 记录。
