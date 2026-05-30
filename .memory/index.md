@@ -9,6 +9,7 @@
 - `sessions/20260530-020915.md` — 初始化 Git，并将 CONTEXT 过载内容拆分到领域、决策、API、数据模型、设计系统、质量和部署文档。 [`tags: #git #docs #handoff #decision`]
 - `sessions/20260530-024731.md` — 完成 M1.1 Next.js + Prisma + SQLite 基础工程，记录 SWC 与 Prisma 本地兼容策略及验证结果。 [`tags: #m1 #nextjs #prisma #sqlite #verification`]
 - `sessions/20260530-202322.md` — 按用户要求忽略 docs、CLAUDE.md、AGENTS.md 并从 Git 索引移除。 [`tags: #git #ignore #docs`]
+- `sessions/20260530-204044.md` — 完成 M1.2 基础 UI 组件库和 /ui 示例页，并通过 lint/typecheck/test/build/dev 访问验证。 [`tags: #m1 #ui #frontend #verification`]
 
 ## Notes
 
