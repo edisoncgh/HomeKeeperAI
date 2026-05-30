@@ -12,6 +12,7 @@
 - 用户于 2026-05-30 要求 `docs/`、`CLAUDE.md`、`AGENTS.md` 不再由 Git 跟踪；本地仍保留这些文件，`.memory/` 仍被跟踪。
 - M1.1 已建立 Next.js 15.5 + React 19 + TypeScript + TailwindCSS + Prisma 6 + SQLite + Vitest 基础工程。
 - M1.2 已建立 `components/ui` 基础组件库：Button、Input、Card、Tag；示例页为 `/ui`。
+- M1.3 已建立 `components/layout/AppShell` 响应式布局框架：移动端底部导航、平板/PC 左侧侧边栏、主内容区。
 - 本地 SQLite 开发库位于 `data/dev.db`，`data/` 被 Git 忽略。
 
 ## Conventions
@@ -24,6 +25,7 @@
 - 当前环境中 Next 命令通过 `scripts/run-next.mjs` 使用 wasm SWC，并预加载 `scripts/patch-readlink.cjs`。
 - 当前环境中 `npm run prisma:push` 通过 `scripts/push-db.mjs` 在 Prisma CLI 失败时回退到 SQLite migration。
 - 基础 UI 组件使用 `lucide-react` 作为线性图标来源。
+- 应用主导航配置集中在 `lib/navigation.ts`；当前仅暴露已存在页面 `/` 和 `/ui`，避免导航到未实现路由。
 
 ## User Preferences
 
@@ -40,3 +42,4 @@
 - **2026-05-30**: 保留 wasm SWC/readlink patch 与 Prisma SQLite fallback。原因：当前 Windows/M 盘沙箱环境存在原生 SWC 加载和 Prisma schema engine 写库问题。
 - **2026-05-30**: 按用户要求将 `docs/`、`CLAUDE.md`、`AGENTS.md` 加入 `.gitignore` 并从 Git 索引移除。原因：用户希望这些项目不进入 Git 记录。
 - **2026-05-30**: M1.2 基础 UI 组件库完成。原因：为后续物品录入、筛选、预警和设置页面提供统一控件。
+- **2026-05-30**: M1.3 响应式布局框架完成。原因：为后续认证、物品管理和预警页面提供统一跨端导航外壳。
