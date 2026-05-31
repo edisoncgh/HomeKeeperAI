@@ -4,7 +4,15 @@ import type { ReactNode } from "react";
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, LayoutGrid, Menu, PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import {
+  FolderTree,
+  Home,
+  LayoutGrid,
+  MapPin,
+  Menu,
+  PanelLeftClose,
+  PanelLeftOpen
+} from "lucide-react";
 import { cn } from "@/lib/class-names";
 import {
   getActiveNavigationItem,
@@ -20,8 +28,10 @@ interface AppShellProps {
 type NavigationPlacement = "bottom" | "sidebar";
 
 const iconMap: Record<NavigationIconKey, typeof Home> = {
+  "folder-tree": FolderTree,
   home: Home,
-  "layout-grid": LayoutGrid
+  "layout-grid": LayoutGrid,
+  "map-pin": MapPin
 };
 
 export function AppShell({ children }: AppShellProps) {
@@ -176,7 +186,7 @@ function MobileBottomNavigation({ activeItem }: { activeItem: NavigationItem }) 
   return (
     <nav
       aria-label="底部导航"
-      className="fixed inset-x-0 bottom-0 z-30 grid h-16 grid-cols-2 border-t border-soft-border bg-surface/95 px-2 pb-[env(safe-area-inset-bottom)] shadow-[0_-8px_24px_rgba(51,51,51,0.08)] backdrop-blur md:hidden"
+      className="fixed inset-x-0 bottom-0 z-30 grid h-16 auto-cols-fr grid-flow-col border-t border-soft-border bg-surface/95 px-2 pb-[env(safe-area-inset-bottom)] shadow-[0_-8px_24px_rgba(51,51,51,0.08)] backdrop-blur md:hidden"
     >
       {navigationItems.map((item) => (
         <NavigationLink isActive={activeItem.id === item.id} item={item} key={item.id} placement="bottom" />

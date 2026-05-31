@@ -5,6 +5,8 @@ describe("navigationItems", () => {
   it("exposes stable application navigation entries", () => {
     expect(navigationItems).toEqual([
       expect.objectContaining({ id: "overview", href: "/", label: "总览" }),
+      expect.objectContaining({ id: "categories", href: "/categories", label: "分类" }),
+      expect.objectContaining({ id: "locations", href: "/locations", label: "位置" }),
       expect.objectContaining({ id: "ui", href: "/ui", label: "组件" })
     ]);
   });
@@ -13,6 +15,8 @@ describe("navigationItems", () => {
 describe("getActiveNavigationItem", () => {
   it("matches the current route by exact route or nested route prefix", () => {
     expect(getActiveNavigationItem("/")).toMatchObject({ id: "overview" });
+    expect(getActiveNavigationItem("/categories")).toMatchObject({ id: "categories" });
+    expect(getActiveNavigationItem("/locations/3")).toMatchObject({ id: "locations" });
     expect(getActiveNavigationItem("/ui")).toMatchObject({ id: "ui" });
     expect(getActiveNavigationItem("/ui/buttons")).toMatchObject({ id: "ui" });
   });
