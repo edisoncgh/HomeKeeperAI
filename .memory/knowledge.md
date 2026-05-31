@@ -17,6 +17,7 @@
 - M1.5 已完成 review 收口：保留 50 行函数规范，拆分超长 UI 函数，加强登录校验，用事务加固首次管理员初始化，并修正文档一致性。
 - M2 规划已确定依赖顺序：先分类/位置基础管理，再物品 API，再物品 UI，再搜索筛选排序，最后做 M2 收口复查。
 - M2.1 分类与位置基础管理已实现：分类/位置 CRUD API、`/categories`、`/locations`、共用 taxonomy 校验和管理 UI。
+- M2.2 物品 API 与领域逻辑已实现：物品 CRUD API、列表查询、详情读取、输入/查询校验，以及创建物品时自动写入 `ItemRecord(type=IN)` 的事务。
 - 发布路线已确认：不插入提前 NAS 试用版，继续按 M2-M5 完整路线推进；M5 后作为家庭 NAS 1.0 发布候选。
 - M3 AI 功能是关键里程碑，进入 M3 前必须先专项规划 LLM 功能边界、System Prompt、结构化响应、解析校验、失败兜底、隐私和成本。
 - 本地 SQLite 开发库位于 `data/dev.db`，`data/` 被 Git 忽略。
@@ -38,7 +39,9 @@
 - 如果 `npm run build` 因 `.next/trace` EPERM 失败，先检查残留 dev server 是否占用 3000 端口并清理 `.next` 后重跑。
 - M2 删除分类或位置时不删除物品，物品外键按 Prisma `onDelete: SetNull` 置空。
 - M2 创建物品时自动创建 `ItemRecord(type=IN)`，操作人使用当前登录用户 ID。
+- M2 物品详情接口返回最近 20 条出入库记录；M2 更新物品数量只更新当前值，不创建库存调整记录。
 - 分类和位置管理共用 `components/inventory/taxonomy-manager.tsx`、`lib/api/taxonomy.ts`、`lib/validation/taxonomy.ts`。
+- 物品 API 共用 `lib/api/items.ts`，物品输入和查询参数校验放在 `lib/validation/item.ts`。
 
 ## User Preferences
 
@@ -63,3 +66,4 @@
 - **2026-05-31**: 用户强调 M3 需要郑重规划。原因：AI 功能涉及产品构思、LLM API 交互、System Prompt 设计、结构化响应解析和失败兜底，是项目核心差异化能力。
 - **2026-05-31**: M2.1 分类与位置基础管理实现完成并通过自动验证。原因：物品 CRUD 需要稳定分类和位置外键数据；页面实际观感仍需用户人工确认。
 - **2026-05-31**: 修复开发环境访问分类/位置后反复跳登录。原因：未配置 `AUTH_SECRET` 时模块重载会重新生成临时密钥，导致旧 Cookie 签名失效；改为 `globalThis` 存储 dev fallback secret 并增加回归测试。
+- **2026-06-01**: M2.2 物品 API 与领域逻辑完成。原因：M2.3 UI 需要稳定的物品 CRUD、列表查询和创建入库记录领域契约。

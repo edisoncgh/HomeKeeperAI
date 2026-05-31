@@ -18,6 +18,7 @@
 - `sessions/20260531-025408.md` — 记录 M3 是关键 AI 里程碑，进入前必须专项规划 Prompt、LLM API、响应解析和失败兜底。 [`tags: #m3 #ai #planning #prompt #decision`]
 - `sessions/20260531-215546.md` — 完成 M2.1 分类与位置基础管理代码实现和自动验证，等待用户人工确认 UI。 [`tags: #m2 #taxonomy #api #frontend #tdd #verification`]
 - `sessions/20260531-230309.md` — 修复开发环境模块重载导致认证 Cookie 失效并跳登录的问题。 [`tags: #bug #auth #diagnose #m2 #verification`]
+- `sessions/20260601-000205.md` — 完成 M2.2 物品 CRUD API、输入查询校验和创建入库记录事务，并通过自动验证。 [`tags: #m2 #items #api #tdd #verification`]
 
 ## Notes
 

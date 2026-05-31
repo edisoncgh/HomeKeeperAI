@@ -4,7 +4,7 @@
 
 ## 当前状态
 
-Milestone #1 已完成并进入收口修复：当前具备 Next.js + TypeScript + TailwindCSS + Prisma + SQLite 基础工程、基础 UI 组件、响应式 AppShell、首次管理员初始化和本地登录能力。下一阶段将进入 M2：分类、位置、物品 CRUD 与列表检索。
+当前处于 Milestone #2：已具备 Next.js + TypeScript + TailwindCSS + Prisma + SQLite 基础工程、基础 UI 组件、响应式 AppShell、首次管理员初始化、本地登录、分类/位置管理，以及物品 CRUD API 与创建入库记录逻辑。下一步是 M2.3 物品管理 UI。
 
 ## 本地开发
 
