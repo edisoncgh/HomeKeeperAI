@@ -34,6 +34,7 @@
 - 应用主导航配置集中在 `lib/navigation.ts`；当前仅暴露已存在页面 `/` 和 `/ui`，避免导航到未实现路由。
 - 密码使用 Node `crypto.scrypt` 加随机盐哈希；会话 token 使用 HMAC 签名并写入 HttpOnly Cookie。
 - 生产环境必须配置 `AUTH_SECRET`；依赖 Cookie 或数据库状态的页面必须 `force-dynamic`。
+- 开发环境未配置 `AUTH_SECRET` 时，fallback secret 必须通过 `globalThis.authDevSecret` 在同一 dev 进程内保持稳定，避免 Next dev 模块重载后 Cookie 失效。
 - 如果 `npm run build` 因 `.next/trace` EPERM 失败，先检查残留 dev server 是否占用 3000 端口并清理 `.next` 后重跑。
 - M2 删除分类或位置时不删除物品，物品外键按 Prisma `onDelete: SetNull` 置空。
 - M2 创建物品时自动创建 `ItemRecord(type=IN)`，操作人使用当前登录用户 ID。
@@ -61,3 +62,4 @@
 - **2026-05-31**: 用户确认 1.0 发布路线按 M2-M5 完整推进。原因：项目不急于提前试用，M3 AI 拍照智能入库是核心定位，应在完整版本中成熟实现后再上 NAS 家用。
 - **2026-05-31**: 用户强调 M3 需要郑重规划。原因：AI 功能涉及产品构思、LLM API 交互、System Prompt 设计、结构化响应解析和失败兜底，是项目核心差异化能力。
 - **2026-05-31**: M2.1 分类与位置基础管理实现完成并通过自动验证。原因：物品 CRUD 需要稳定分类和位置外键数据；页面实际观感仍需用户人工确认。
+- **2026-05-31**: 修复开发环境访问分类/位置后反复跳登录。原因：未配置 `AUTH_SECRET` 时模块重载会重新生成临时密钥，导致旧 Cookie 签名失效；改为 `globalThis` 存储 dev fallback secret 并增加回归测试。

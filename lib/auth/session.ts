@@ -23,7 +23,9 @@ interface TokenUser {
   username: string;
 }
 
-const generatedDevSecret = randomBytes(32).toString("base64url");
+const globalForAuth = globalThis as typeof globalThis & {
+  authDevSecret?: string;
+};
 
 export function createSessionToken(user: TokenUser, options: TokenOptions = {}) {
   const now = options.now ?? new Date();
@@ -89,7 +91,8 @@ function getAuthSecret() {
     throw new Error("AUTH_SECRET 未配置，无法创建或验证认证会话。");
   }
 
-  return generatedDevSecret;
+  globalForAuth.authDevSecret ??= randomBytes(32).toString("base64url");
+  return globalForAuth.authDevSecret;
 }
 
 function sign(encodedPayload: string, secret: string) {

@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { createSessionToken, verifySessionToken } from "@/lib/auth/session";
 
 const testUser = {
@@ -8,6 +8,10 @@ const testUser = {
 };
 
 describe("auth session token", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
   it("creates and verifies a signed session token", () => {
     const token = createSessionToken(testUser, {
       now: new Date("2026-05-30T00:00:00.000Z"),
@@ -34,5 +38,22 @@ describe("auth session token", () => {
         secret: "test-secret"
       })
     ).toBeNull();
+  });
+
+  it("keeps development fallback secret stable across module reloads", async () => {
+    vi.stubEnv("NODE_ENV", "development");
+    vi.stubEnv("AUTH_SECRET", "");
+
+    const { createSessionToken: createToken } = await import("@/lib/auth/session");
+    const token = createToken(testUser);
+
+    vi.resetModules();
+    const { verifySessionToken: verifyToken } = await import("@/lib/auth/session");
+
+    expect(verifyToken(token)).toMatchObject({
+      role: "ADMIN",
+      userId: 7,
+      username: "admin"
+    });
   });
 });
