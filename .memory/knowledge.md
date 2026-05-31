@@ -35,6 +35,8 @@
 - 应用主导航配置集中在 `lib/navigation.ts`；当前仅暴露已存在页面 `/` 和 `/ui`，避免导航到未实现路由。
 - 密码使用 Node `crypto.scrypt` 加随机盐哈希；会话 token 使用 HMAC 签名并写入 HttpOnly Cookie。
 - 生产环境必须配置 `AUTH_SECRET`；依赖 Cookie 或数据库状态的页面必须 `force-dynamic`。
+- 本地和容器端口配置使用 `PORT`，不要使用旧的 `APP_PORT`。
+- 首次管理员当前通过 `/setup` 页面创建，不使用环境变量硬编码初始管理员密码。
 - 开发环境未配置 `AUTH_SECRET` 时，fallback secret 必须通过 `globalThis.authDevSecret` 在同一 dev 进程内保持稳定，避免 Next dev 模块重载后 Cookie 失效。
 - 如果 `npm run build` 因 `.next/trace` EPERM 失败，先检查残留 dev server 是否占用 3000 端口并清理 `.next` 后重跑。
 - M2 删除分类或位置时不删除物品，物品外键按 Prisma `onDelete: SetNull` 置空。
@@ -67,3 +69,4 @@
 - **2026-05-31**: M2.1 分类与位置基础管理实现完成并通过自动验证。原因：物品 CRUD 需要稳定分类和位置外键数据；页面实际观感仍需用户人工确认。
 - **2026-05-31**: 修复开发环境访问分类/位置后反复跳登录。原因：未配置 `AUTH_SECRET` 时模块重载会重新生成临时密钥，导致旧 Cookie 签名失效；改为 `globalThis` 存储 dev fallback secret 并增加回归测试。
 - **2026-06-01**: M2.2 物品 API 与领域逻辑完成。原因：M2.3 UI 需要稳定的物品 CRUD、列表查询和创建入库记录领域契约。
+- **2026-06-01**: 会话交接收口完成。原因：新会话将从 M2.3 开始，需确保 docs、`.memory`、`.env.example` 对当前真实状态一致。
