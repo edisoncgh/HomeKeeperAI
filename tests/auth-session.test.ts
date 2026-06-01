@@ -1,5 +1,12 @@
+import { mkdtempSync, rmSync } from "node:fs";
+import { join } from "node:path";
+import { tmpdir } from "node:os";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createSessionToken, verifySessionToken } from "@/lib/auth/session";
+
+const globalForAuthTest = globalThis as typeof globalThis & {
+  authDevSecret?: string;
+};
 
 const testUser = {
   id: 7,
@@ -8,8 +15,15 @@ const testUser = {
 };
 
 describe("auth session token", () => {
+  let tempDir: string | null = null;
+
   afterEach(() => {
     vi.unstubAllEnvs();
+    delete globalForAuthTest.authDevSecret;
+    if (tempDir) {
+      rmSync(tempDir, { force: true, recursive: true });
+      tempDir = null;
+    }
   });
 
   it("creates and verifies a signed session token", () => {
@@ -55,5 +69,22 @@ describe("auth session token", () => {
       userId: 7,
       username: "admin"
     });
+  });
+
+  it("persists the development fallback secret outside the current process", async () => {
+    tempDir = mkdtempSync(join(tmpdir(), "hsa-auth-"));
+    const secretPath = join(tempDir, "dev-secret");
+    vi.stubEnv("NODE_ENV", "development");
+    vi.stubEnv("AUTH_SECRET", "");
+    vi.stubEnv("AUTH_DEV_SECRET_PATH", secretPath);
+
+    const { getAuthSecret } = await import("@/lib/auth/session");
+    const firstSecret = getAuthSecret();
+
+    delete globalForAuthTest.authDevSecret;
+    vi.resetModules();
+    const { getAuthSecret: getReloadedAuthSecret } = await import("@/lib/auth/session");
+
+    expect(getReloadedAuthSecret()).toBe(firstSecret);
   });
 });

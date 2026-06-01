@@ -1,4 +1,6 @@
 import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { dirname, join } from "node:path";
 
 export const SESSION_COOKIE_NAME = "home_storage_session";
 export const SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 7;
@@ -91,8 +93,34 @@ export function getAuthSecret() {
     throw new Error("AUTH_SECRET 未配置，无法创建或验证认证会话。");
   }
 
-  globalForAuth.authDevSecret ??= randomBytes(32).toString("base64url");
+  globalForAuth.authDevSecret ??= readOrCreateDevAuthSecret();
   return globalForAuth.authDevSecret;
+}
+
+function readOrCreateDevAuthSecret() {
+  const secretPath = getDevAuthSecretPath();
+  const existingSecret = readDevAuthSecret(secretPath);
+  if (existingSecret) {
+    return existingSecret;
+  }
+
+  const nextSecret = randomBytes(32).toString("base64url");
+  mkdirSync(dirname(secretPath), { recursive: true });
+  writeFileSync(secretPath, nextSecret, { encoding: "utf8" });
+  return nextSecret;
+}
+
+function getDevAuthSecretPath() {
+  return process.env.AUTH_DEV_SECRET_PATH || join(process.cwd(), "data", "dev-auth-secret");
+}
+
+function readDevAuthSecret(secretPath: string) {
+  if (!existsSync(secretPath)) {
+    return null;
+  }
+
+  const secret = readFileSync(secretPath, "utf8").trim();
+  return secret || null;
 }
 
 function sign(encodedPayload: string, secret: string) {

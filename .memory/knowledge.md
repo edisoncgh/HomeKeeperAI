@@ -27,8 +27,11 @@
 - M3 AI 功能是关键里程碑，进入 M3 前必须先专项规划 LLM 功能边界、System Prompt、结构化响应、解析校验、失败兜底、隐私和成本。
 - M3.0 AI 专项规划已完成：后续从 M3.1 LLM 配置与调用边界开始，再推进结构化契约、候选确认、拍照识别、订单解析和主页 AI 建议。
 - M3.1 LLM 配置与调用边界已完成：新增 `lib/ai/config.ts`、`lib/ai/client.ts`、`lib/api/ai.ts` 和 `GET /api/ai/health`，支持配置解析、OpenAI 兼容调用、有限重试、错误分类和脱敏中文错误。
-- M3.1.5 系统设置与 LLM 配置 UI 已完成代码实现和自动验证：新增 `AppSetting`、`/settings`、`GET/PUT /api/settings/llm`、API Key 加密存储、导航入口和测试连接入口；等待用户人工验收页面体验。
+- M3.1.5 系统设置与 LLM 配置 UI 已完成：新增 `AppSetting`、`/settings`、`GET/PUT /api/settings/llm`、API Key 加密存储、导航入口和测试连接入口。
+- M3.1.5 设置页已由用户人工确认可用，用户保存 LLM API 并测试连接成功；开发环境 fallback secret 已改为持久化到 `data/dev-auth-secret`，避免重启后无法解密本地 LLM API Key。
+- M3.2 AI 结构化契约与解析校验已完成：新增 `lib/ai/schemas.ts`、`lib/ai/prompts.ts`、`lib/ai/parse.ts`、`tests/ai-contract.test.ts`、`tests/ai-candidate-parser.test.ts`。
 - M3 AI 统一边界：AI 输出只作为候选；图片或订单中可见信息优先作为证据；缺失信息可语义推断为默认值但必须标明来源和置信度；用户确认或修改后才写入正式物品。
+- M3.2 解析边界：AI 候选响应支持 `image`、`order`、`inference`、`user` 来源；`source=inference` 必须提供 `reason`；低置信度字段保留但生成 warnings；非 JSON 或不可恢复响应返回中文友好错误。
 - M3 主页 AI 建议必须由用户手动触发，不做后台自动调用；远端 LLM 异常必须展示中文友好提示，不能导致页面额外报错。
 - 本地 SQLite 开发库位于 `data/dev.db`，`data/` 被 Git 忽略。
 
@@ -47,7 +50,7 @@
 - 生产环境必须配置 `AUTH_SECRET`；依赖 Cookie 或数据库状态的页面必须 `force-dynamic`。
 - 本地和容器端口配置使用 `PORT`，不要使用旧的 `APP_PORT`。
 - 首次管理员当前通过 `/setup` 页面创建，不使用环境变量硬编码初始管理员密码。
-- 开发环境未配置 `AUTH_SECRET` 时，fallback secret 必须通过 `globalThis.authDevSecret` 在同一 dev 进程内保持稳定，避免 Next dev 模块重载后 Cookie 失效。
+- 开发环境未配置 `AUTH_SECRET` 时，fallback secret 写入 `data/dev-auth-secret`，同时仍缓存在 `globalThis.authDevSecret` 中；测试可用 `AUTH_DEV_SECRET_PATH` 指定临时路径。
 - 如果 `npm run build` 因 `.next/trace` EPERM 失败，先检查残留 dev server 是否占用 3000 端口并清理 `.next` 后重跑。
 - M2 删除分类或位置时不删除物品，物品外键按 Prisma `onDelete: SetNull` 置空。
 - M2 创建物品时自动创建 `ItemRecord(type=IN)`，操作人使用当前登录用户 ID。
@@ -93,3 +96,5 @@
 - **2026-06-02**: M3.0 AI 专项规划完成。原因：用户补充确认 AI 需要支持语义默认填充、主页手动 AI 建议和远端调用友好错误提示；后续开发从 M3.1 LLM 配置与调用边界开始。
 - **2026-06-02**: M3.1 LLM 配置与调用边界完成。原因：后续拍照识别、订单解析和主页 AI 建议需要稳定的 OpenAI 兼容配置、调用、重试和错误处理底座。
 - **2026-06-02**: M3.1.5 系统设置与 LLM 配置 UI 完成代码实现。原因：用户希望在系统设置页维护 LLM API，而不是只通过 `.env` 或 Docker 环境变量配置。
+- **2026-06-02**: 开发环境 fallback secret 持久化到 `data/dev-auth-secret`。原因：LLM API Key 使用认证密钥派生加密，进程内临时密钥会导致 dev server 重启后无法解密本地设置。
+- **2026-06-02**: M3.2 AI 结构化契约与解析校验完成。原因：拍照识别和订单解析前必须先统一 Prompt、JSON Schema、字段来源、置信度、语义默认值和异常响应恢复。
