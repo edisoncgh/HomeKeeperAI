@@ -10,6 +10,7 @@ import {
   LayoutGrid,
   MapPin,
   Menu,
+  Package,
   PanelLeftClose,
   PanelLeftOpen
 } from "lucide-react";
@@ -31,7 +32,8 @@ const iconMap: Record<NavigationIconKey, typeof Home> = {
   "folder-tree": FolderTree,
   home: Home,
   "layout-grid": LayoutGrid,
-  "map-pin": MapPin
+  "map-pin": MapPin,
+  package: Package
 };
 
 export function AppShell({ children }: AppShellProps) {

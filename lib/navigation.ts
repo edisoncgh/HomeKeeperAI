@@ -1,5 +1,5 @@
-export type NavigationItemId = "categories" | "locations" | "overview" | "ui";
-export type NavigationIconKey = "folder-tree" | "home" | "layout-grid" | "map-pin";
+export type NavigationItemId = "categories" | "items" | "locations" | "overview" | "ui";
+export type NavigationIconKey = "folder-tree" | "home" | "layout-grid" | "map-pin" | "package";
 
 export interface NavigationItem {
   readonly href: string;
@@ -14,6 +14,12 @@ export const navigationItems: readonly NavigationItem[] = [
     icon: "home",
     id: "overview",
     label: "总览"
+  },
+  {
+    href: "/items",
+    icon: "package",
+    id: "items",
+    label: "物品"
   },
   {
     href: "/categories",

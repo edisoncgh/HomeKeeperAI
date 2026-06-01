@@ -4,7 +4,9 @@
 
 ## 当前状态
 
-当前处于 Milestone #2：已具备 Next.js + TypeScript + TailwindCSS + Prisma + SQLite 基础工程、基础 UI 组件、响应式 AppShell、首次管理员初始化、本地登录、分类/位置管理，以及物品 CRUD API 与创建入库记录逻辑。下一步是 M2.3 物品管理 UI。
+Milestone #2 核心功能已完成：已具备 Next.js + TypeScript + TailwindCSS + Prisma + SQLite 基础工程、基础 UI 组件、响应式 AppShell、首次管理员初始化、本地登录、分类/位置管理、物品管理 UI、物品 CRUD API、创建入库记录逻辑，以及物品列表搜索、筛选、排序和分页。分类/位置图标字段支持 emoji 候选，物品详情中的最近记录时间显示到分钟。
+
+下一步进入 Milestone #3 前，需要先专项规划 AI 能力边界、LLM API、System Prompt、结构化响应和失败兜底。
 
 ## 本地开发
 

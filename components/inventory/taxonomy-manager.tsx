@@ -3,6 +3,7 @@
 import { FormEvent, useState } from "react";
 import { CheckCircle2, Pencil, Plus, Trash2, X } from "lucide-react";
 import { Button, Card, CardDescription, CardHeader, CardTitle, Input, Tag } from "@/components/ui";
+import { getTaxonomyIconOptions } from "@/lib/inventory/taxonomy-icon-options";
 
 export interface TaxonomyItemView {
   color: null | string;
@@ -319,10 +320,11 @@ function TaxonomyFields({
       />
       <div className="grid gap-3 sm:grid-cols-2">
         <Input
+          helperText="可直接输入 emoji，或从下方选择。"
           label="图标"
           name="icon"
           onChange={(event) => onChange({ ...form, icon: event.target.value })}
-          placeholder="例如：apple"
+          placeholder={resourceLabel === "分类" ? "例如：🍎" : "例如：🍳"}
           value={form.icon}
         />
         <Input
@@ -333,6 +335,7 @@ function TaxonomyFields({
           value={form.color}
         />
       </div>
+      <IconSuggestions onSelect={(icon) => onChange({ ...form, icon })} resourceLabel={resourceLabel} />
       <Input
         label="描述"
         name="description"
@@ -341,6 +344,31 @@ function TaxonomyFields({
         value={form.description}
       />
     </>
+  );
+}
+
+function IconSuggestions({
+  onSelect,
+  resourceLabel
+}: {
+  onSelect: (icon: string) => void;
+  resourceLabel: "位置" | "分类";
+}) {
+  return (
+    <div className="flex flex-wrap gap-2">
+      {getTaxonomyIconOptions(resourceLabel).map((option) => (
+        <button
+          aria-label={`使用${option.label}图标${option.emoji}`}
+          className="min-h-11 rounded-card border border-soft-border bg-surface px-3 text-sm text-text-primary transition hover:border-primary hover:bg-primary-light focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+          key={`${option.emoji}-${option.label}`}
+          onClick={() => onSelect(option.emoji)}
+          type="button"
+        >
+          <span aria-hidden>{option.emoji}</span>
+          <span className="ml-1">{option.label}</span>
+        </button>
+      ))}
+    </div>
   );
 }
 

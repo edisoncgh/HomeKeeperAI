@@ -59,6 +59,35 @@ describe("item API helpers", () => {
     });
   });
 
+  it("combines search, filters, sorting and pagination for item lists", async () => {
+    mocks.getCurrentUser.mockResolvedValue({ id: 5, username: "admin" });
+    mocks.prisma.item.findMany.mockResolvedValue([{ id: 9, name: "牛奶" }]);
+    mocks.prisma.item.count.mockResolvedValue(21);
+
+    const response = await listItems(
+      new Request(
+        "http://localhost/api/items?q=%E7%89%9B%E5%A5%B6&categoryId=1&locationId=2&status=NORMAL&sort=expiryDate&order=asc&page=2&pageSize=20"
+      )
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.data.pagination).toEqual({ page: 2, pageCount: 2, pageSize: 20, total: 21 });
+    expect(mocks.prisma.item.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        orderBy: { expiryDate: "asc" },
+        skip: 20,
+        take: 20,
+        where: expect.objectContaining({
+          categoryId: 1,
+          locationId: 2,
+          status: "NORMAL"
+        })
+      })
+    );
+    expect(mocks.prisma.item.findMany.mock.calls[0][0].where.OR).toHaveLength(3);
+  });
+
   it("rejects missing category references before writing", async () => {
     mocks.getCurrentUser.mockResolvedValue({ id: 5, username: "admin" });
     mocks.prisma.category.findUnique.mockResolvedValue(null);

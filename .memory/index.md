@@ -20,6 +20,11 @@
 - `sessions/20260531-230309.md` — 修复开发环境模块重载导致认证 Cookie 失效并跳登录的问题。 [`tags: #bug #auth #diagnose #m2 #verification`]
 - `sessions/20260601-000205.md` — 完成 M2.2 物品 CRUD API、输入查询校验和创建入库记录事务，并通过自动验证。 [`tags: #m2 #items #api #tdd #verification`]
 - `sessions/20260601-002834.md` — 完成新会话交接收口，检查并同步 docs、项目记忆和环境变量说明。 [`tags: #handoff #docs #memory #neat-freak #m2`]
+- `sessions/20260601-010026.md` — 完成 M2.3 物品管理 UI、导航入口和自动验证，等待用户人工确认页面体验。 [`tags: #m2 #items #frontend #verification #handoff`]
+- `sessions/20260601-152422.md` — 记录用户对临期提醒的反馈，并将 slice 结束人工验收清单要求写入 CLAUDE.md。 [`tags: #docs #memory #handoff #preference`]
+- `sessions/20260601-155043.md` — 完成 M2.4 物品搜索、筛选、排序、分页和 URL 状态同步，并通过自动验证。 [`tags: #m2 #items #search #filter #verification`]
+- `sessions/20260601-173737.md` — 完成 M2.5 收口复查，更新 README、docs 和项目记忆到 M2 完成状态。 [`tags: #m2 #handoff #docs #memory #verification`]
+- `sessions/20260601-182844.md` — 完成 M2 体验打磨：记录时间显示到分钟、分类/位置 emoji 图标候选，并准备 Git 收口提交。 [`tags: #m2 #items #taxonomy #frontend #verification #git`]
 
 ## Notes
 

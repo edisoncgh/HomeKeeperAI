@@ -130,7 +130,7 @@ export function parseRouteId(value: string) {
   return Number.isInteger(id) && id > 0 ? id : null;
 }
 
-async function queryItems(query: ItemQuery) {
+export async function queryItems(query: ItemQuery) {
   const where = buildItemWhere(query);
   const [items, total] = await prisma.$transaction([
     prisma.item.findMany({
