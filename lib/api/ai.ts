@@ -1,7 +1,8 @@
 import { apiError, apiOk } from "@/lib/api/response";
 import { createAiErrorResponse, createChatCompletion } from "@/lib/ai/client";
-import { AiConfig, AiEnv, parseAiConfig } from "@/lib/ai/config";
+import { AiConfig, AiEnv } from "@/lib/ai/config";
 import { getCurrentUser } from "@/lib/auth/current-user";
+import { getEffectiveAiConfig } from "@/lib/settings/llm";
 
 interface CheckAiHealthOptions {
   env?: AiEnv;
@@ -15,7 +16,7 @@ export async function checkAiHealth(options: CheckAiHealthOptions = {}) {
     return apiError("请先登录。", 401);
   }
 
-  const parsed = parseAiConfig(options.env);
+  const parsed = await getEffectiveAiConfig(options.env);
   if (!parsed.ok) {
     return apiError(parsed.message, 400, { type: "configuration" });
   }

@@ -87,6 +87,13 @@ model Alert {
   item      Item        @relation(fields: [itemId], references: [id], onDelete: Cascade)
 }
 
+model AppSetting {
+  key       String   @id
+  value     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
 enum UserRole {
   ADMIN
   MEMBER

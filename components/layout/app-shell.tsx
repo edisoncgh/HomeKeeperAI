@@ -12,7 +12,8 @@ import {
   Menu,
   Package,
   PanelLeftClose,
-  PanelLeftOpen
+  PanelLeftOpen,
+  Settings
 } from "lucide-react";
 import { cn } from "@/lib/class-names";
 import {
@@ -33,7 +34,8 @@ const iconMap: Record<NavigationIconKey, typeof Home> = {
   home: Home,
   "layout-grid": LayoutGrid,
   "map-pin": MapPin,
-  package: Package
+  package: Package,
+  settings: Settings
 };
 
 export function AppShell({ children }: AppShellProps) {

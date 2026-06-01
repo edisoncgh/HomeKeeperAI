@@ -8,6 +8,7 @@ describe("navigationItems", () => {
       expect.objectContaining({ id: "items", href: "/items", label: "物品" }),
       expect.objectContaining({ id: "categories", href: "/categories", label: "分类" }),
       expect.objectContaining({ id: "locations", href: "/locations", label: "位置" }),
+      expect.objectContaining({ id: "settings", href: "/settings", label: "设置" }),
       expect.objectContaining({ id: "ui", href: "/ui", label: "组件" })
     ]);
   });
@@ -20,6 +21,7 @@ describe("getActiveNavigationItem", () => {
     expect(getActiveNavigationItem("/items/3")).toMatchObject({ id: "items" });
     expect(getActiveNavigationItem("/categories")).toMatchObject({ id: "categories" });
     expect(getActiveNavigationItem("/locations/3")).toMatchObject({ id: "locations" });
+    expect(getActiveNavigationItem("/settings")).toMatchObject({ id: "settings" });
     expect(getActiveNavigationItem("/ui")).toMatchObject({ id: "ui" });
     expect(getActiveNavigationItem("/ui/buttons")).toMatchObject({ id: "ui" });
   });

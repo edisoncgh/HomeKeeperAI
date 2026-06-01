@@ -82,7 +82,7 @@ export function getExpiredSessionCookieOptions() {
   };
 }
 
-function getAuthSecret() {
+export function getAuthSecret() {
   if (process.env.AUTH_SECRET) {
     return process.env.AUTH_SECRET;
   }

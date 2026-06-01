@@ -6,11 +6,18 @@ import { fileURLToPath } from "node:url";
 const currentFile = fileURLToPath(import.meta.url);
 const projectRoot = path.resolve(path.dirname(currentFile), "..");
 const databasePath = path.join(projectRoot, "data", "dev.db");
-const migrationPath = path.join(
+const initialMigrationPath = path.join(
   projectRoot,
   "prisma",
   "migrations",
   "20260530023000_init",
+  "migration.sql"
+);
+const appSettingsMigrationPath = path.join(
+  projectRoot,
+  "prisma",
+  "migrations",
+  "20260602021500_add_app_settings",
   "migration.sql"
 );
 
@@ -37,21 +44,45 @@ function hasExistingSchema() {
   return result.status === 0 && result.stdout.includes("User");
 }
 
+function getTableList() {
+  if (!fs.existsSync(databasePath)) {
+    return "";
+  }
+
+  const result = run("sqlite3", [databasePath, ".tables"]);
+  return result.status === 0 ? result.stdout : "";
+}
+
 function applySqliteMigration() {
   fs.mkdirSync(path.dirname(databasePath), { recursive: true });
 
   if (hasExistingSchema()) {
-    console.log("SQLite schema already exists.");
+    applyPendingSqliteMigrations();
     return;
   }
 
+  runSqliteMigration(initialMigrationPath);
+  applyPendingSqliteMigrations();
+  console.log("SQLite schema initialized from migration SQL.");
+}
+
+function applyPendingSqliteMigrations() {
+  const tables = getTableList();
+  if (!tables.includes("AppSetting")) {
+    runSqliteMigration(appSettingsMigrationPath);
+    console.log("SQLite AppSetting migration applied.");
+    return;
+  }
+
+  console.log("SQLite schema already exists.");
+}
+
+function runSqliteMigration(migrationPath) {
   const result = run("sqlite3", [databasePath, `.read ${migrationPath}`]);
   if (result.status !== 0) {
     process.stderr.write(result.stderr);
     process.exit(result.status ?? 1);
   }
-
-  console.log("SQLite schema initialized from migration SQL.");
 }
 
 const npxCommand = process.platform === "win32" ? "npx.cmd" : "npx";

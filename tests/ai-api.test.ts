@@ -1,11 +1,22 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
-  getCurrentUser: vi.fn()
+  getCurrentUser: vi.fn(),
+  prisma: {
+    appSetting: { findMany: vi.fn() }
+  }
 }));
 
 vi.mock("@/lib/auth/current-user", () => ({
   getCurrentUser: mocks.getCurrentUser
+}));
+
+vi.mock("@/lib/auth/session", () => ({
+  getAuthSecret: () => "auth-secret"
+}));
+
+vi.mock("@/lib/prisma", () => ({
+  prisma: mocks.prisma
 }));
 
 import { checkAiHealth } from "@/lib/api/ai";
@@ -13,6 +24,7 @@ import { checkAiHealth } from "@/lib/api/ai";
 describe("AI API helpers", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mocks.prisma.appSetting.findMany.mockResolvedValue([]);
   });
 
   it("rejects unauthenticated health checks", async () => {
