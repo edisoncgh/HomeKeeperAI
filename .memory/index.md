@@ -26,6 +26,7 @@
 - `sessions/20260601-173737.md` — 完成 M2.5 收口复查，更新 README、docs 和项目记忆到 M2 完成状态。 [`tags: #m2 #handoff #docs #memory #verification`]
 - `sessions/20260601-182844.md` — 完成 M2 体验打磨：记录时间显示到分钟、分类/位置 emoji 图标候选，并准备 Git 收口提交。 [`tags: #m2 #items #taxonomy #frontend #verification #git`]
 - `sessions/20260601-190912.md` — 完成新会话交接前 neat-freak 同步，确认 M2 已验收并将下一步切到 M3.0 AI 专项规划。 [`tags: #handoff #memory #docs #neat-freak #m3`]
+- `sessions/20260602-005508.md` — 完成 M3.0 AI 专项规划同步，明确语义默认值、主页 AI 建议、远端错误提示和 M3.1-M3.6 子切片。 [`tags: #m3 #ai #planning #docs #memory #handoff`]
 
 ## Notes
 
