@@ -6,7 +6,7 @@
 
 Milestone #2 核心功能已完成：已具备 Next.js + TypeScript + TailwindCSS + Prisma + SQLite 基础工程、基础 UI 组件、响应式 AppShell、首次管理员初始化、本地登录、分类/位置管理、物品管理 UI、物品 CRUD API、创建入库记录逻辑，以及物品列表搜索、筛选、排序和分页。分类/位置图标字段支持 emoji 候选，物品详情中的最近记录时间显示到分钟。
 
-下一步进入 Milestone #3 前，需要先专项规划 AI 能力边界、LLM API、System Prompt、结构化响应和失败兜底。
+Milestone #3 已完成 AI 专项规划、LLM 配置与调用边界、系统设置页中的 LLM 配置 UI，以及 AI 结构化候选契约与解析校验。下一步进入 M3.3：AI 候选确认 API/UI 边界规划。
 
 ## 本地开发
 

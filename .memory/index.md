@@ -30,6 +30,7 @@
 - `sessions/20260602-011445.md` — 完成 M3.1 LLM 配置与调用边界，实现配置解析、OpenAI 兼容调用、健康检查 API 和错误脱敏。 [`tags: #m3 #ai #api #tdd #verification`]
 - `sessions/20260602-023115.md` — 完成 M3.1.5 系统设置与 LLM 配置 UI，实现 AppSetting、设置页、设置 API、API Key 加密和导航入口。 [`tags: #m3 #settings #ai #frontend #tdd #verification`]
 - `sessions/20260602-030023.md` — 完成 M3.2 AI 结构化契约与解析校验，并修复开发环境 LLM API Key 加密持久化隐患。 [`tags: #m3 #ai #prompt #schema #parser #settings #security #tdd #verification`]
+- `sessions/20260602-121330.md` — 切换新会话前完成项目记忆和文档卫生检查，修正 README 与 handoff 的过期阶段信息。 [`tags: #handoff #memory #docs #neat-freak #m3`]
 
 ## Notes
 
