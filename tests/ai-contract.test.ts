@@ -28,16 +28,30 @@ describe("AI structured contract", () => {
     expect(prompt).toContain("冰箱、储物间");
     expect(prompt).toContain("优先识别水果");
     expect(prompt).toContain("图片中没有出现的保质期");
+    expect(prompt).toContain('"candidates"');
+    expect(prompt).toContain('"name"');
+    expect(prompt).toContain('"value":"香蕉"');
+    expect(prompt).toContain('"source":"image"');
+    expect(prompt).toContain('"confidence":0.9');
   });
 
-  it("builds order parsing prompts with order evidence priorities", () => {
-    const prompt = buildOrderParsingPrompt({ orderSource: "京东截图" });
+  it("builds order parsing prompts with taxonomy context and order evidence priorities", () => {
+    const prompt = buildOrderParsingPrompt({
+      categories: ["食品", "日用品"],
+      locations: ["冰箱", "储物间"],
+      orderSource: "京东截图"
+    });
 
     expect(prompt).toContain("订单截图");
     expect(prompt).toContain("京东截图");
+    expect(prompt).toContain("食品、日用品");
+    expect(prompt).toContain("冰箱、储物间");
     expect(prompt).toContain("价格");
     expect(prompt).toContain("采购日期");
     expect(prompt).toContain("source: \"order\"");
+    expect(prompt).toContain('"purchasePrice"');
+    expect(prompt).toContain('"purchaseDate"');
+    expect(prompt).toContain('"source":"order"');
   });
 
   it("exports a JSON schema for candidates, warnings, field sources and confidence", () => {

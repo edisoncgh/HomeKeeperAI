@@ -2,6 +2,7 @@
 
 import { FormEvent, useMemo, useState } from "react";
 import { CheckCircle2, ImageIcon, PackagePlus, Pencil, Plus, RefreshCw, Trash2, X } from "lucide-react";
+import { OrderParsingPanel, PhotoRecognitionPanel } from "@/components/ai";
 import { ItemListControls, type PaginationView } from "@/components/inventory/item-list-controls";
 import { Button, Card, CardDescription, CardHeader, CardTitle, Input, Tag } from "@/components/ui";
 import {
@@ -129,6 +130,16 @@ export function ItemManager({ categories, initialFilters, initialItems, initialP
     <section className="mx-auto flex max-w-7xl flex-col gap-5">
       <ItemWorkspaceHeader itemCount={state.pagination.total} onCreate={() => setState(startCreate)} />
       <TaxonomyNotice categories={categories} locations={locations} />
+      <PhotoRecognitionPanel
+        categories={categories}
+        locations={locations}
+        onItemCreated={(item) => setState((current) => handleSaveResponse(current, { item: item as ItemView, ok: true }))}
+      />
+      <OrderParsingPanel
+        categories={categories}
+        locations={locations}
+        onItemCreated={(item) => setState((current) => handleSaveResponse(current, { item: item as ItemView, ok: true }))}
+      />
       <ItemListControls
         categories={categories}
         filters={state.filters}

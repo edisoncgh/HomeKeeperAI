@@ -27,6 +27,38 @@ describe("AI client", () => {
     );
   });
 
+  it("supports OpenAI-compatible vision message content", async () => {
+    const fetcher = vi.fn().mockResolvedValue(jsonResponse({ choices: [{ message: { content: "{}" } }] }));
+
+    await createChatCompletion({
+      config,
+      fetcher,
+      messages: [
+        {
+          content: [
+            { text: "识别图片中的物品。", type: "text" },
+            { image_url: { url: "data:image/png;base64,QUJD" }, type: "image_url" }
+          ],
+          role: "user"
+        }
+      ]
+    });
+
+    const [, init] = fetcher.mock.calls[0];
+    expect(JSON.parse(String(init.body))).toMatchObject({
+      messages: [
+        {
+          content: [
+            { text: "识别图片中的物品。", type: "text" },
+            { image_url: { url: "data:image/png;base64,QUJD" }, type: "image_url" }
+          ],
+          role: "user"
+        }
+      ],
+      model: "gpt-test"
+    });
+  });
+
   it("retries transient remote failures within the configured limit", async () => {
     const fetcher = vi
       .fn()

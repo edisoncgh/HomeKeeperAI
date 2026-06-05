@@ -100,6 +100,27 @@ describe("AI candidate parser", () => {
     expect(result.data.warnings).toContain("洗衣液 的采购价格置信度较低，请人工确认。");
   });
 
+  it("normalizes common vision model source aliases and percentage confidence", () => {
+    const result = parseAiCandidateResponse({
+      candidates: [
+        {
+          name: { confidence: 90, source: "vision", value: "香蕉" },
+          quantity: { confidence: 60, source: "visual", value: 1 }
+        }
+      ],
+      warnings: []
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) {
+      return;
+    }
+    expect(result.data.candidates[0]).toMatchObject({
+      name: { confidence: 0.9, source: "image", value: "香蕉" },
+      quantity: { confidence: 0.6, source: "image", value: 1 }
+    });
+  });
+
   it("returns a friendly error for non JSON responses", () => {
     const result = parseAiCandidateResponse("我看到了香蕉，但无法形成结构化结果。");
 

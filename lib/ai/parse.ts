@@ -162,12 +162,33 @@ function readNameField(value: unknown, warnings: string[]) {
 }
 
 function readSource(value: unknown): AiFieldSource | null {
+  const normalized = normalizeSource(value);
+  if (normalized) {
+    return normalized;
+  }
   const sources: readonly string[] = AI_FIELD_SOURCES;
   return typeof value === "string" && sources.includes(value) ? (value as AiFieldSource) : null;
 }
 
 function readConfidence(value: unknown) {
-  return typeof value === "number" && value >= 0 && value <= 1 ? value : null;
+  if (typeof value !== "number" || value < 0) {
+    return null;
+  }
+  if (value <= 1) {
+    return value;
+  }
+  return value <= 100 ? Number((value / 100).toFixed(4)) : null;
+}
+
+function normalizeSource(value: unknown): AiFieldSource | null {
+  if (typeof value !== "string") {
+    return null;
+  }
+  const normalized = value.trim().toLowerCase();
+  if (["photo", "visual", "vision"].includes(normalized)) {
+    return "image";
+  }
+  return null;
 }
 
 function readReason(value: unknown) {

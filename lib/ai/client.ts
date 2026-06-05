@@ -7,8 +7,14 @@ const DEFAULT_RETRY_DELAY_MS = 250;
 
 export type AiErrorType = "auth" | "invalid_response" | "network" | "rate_limit" | "remote" | "timeout";
 
+export type AiMessageContent = AiMessageContentPart[] | string;
+
+export type AiMessageContentPart =
+  | { text: string; type: "text" }
+  | { image_url: { url: string }; type: "image_url" };
+
 export interface AiMessage {
-  content: string;
+  content: AiMessageContent;
   role: "assistant" | "system" | "user";
 }
 
