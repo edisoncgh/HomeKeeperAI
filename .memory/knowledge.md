@@ -32,7 +32,36 @@
 - M3.2 AI 结构化契约与解析校验已完成：新增 `lib/ai/schemas.ts`、`lib/ai/prompts.ts`、`lib/ai/parse.ts`、`tests/ai-contract.test.ts`、`tests/ai-candidate-parser.test.ts`。
 - M3 AI 统一边界：AI 输出只作为候选；图片或订单中可见信息优先作为证据；缺失信息可语义推断为默认值但必须标明来源和置信度；用户确认或修改后才写入正式物品。
 - M3.2 解析边界：AI 候选响应支持 `image`、`order`、`inference`、`user` 来源；`source=inference` 必须提供 `reason`；低置信度字段保留但生成 warnings；非 JSON 或不可恢复响应返回中文友好错误。
-- M3 主页 AI 建议必须由用户手动触发，不做后台自动调用；远端 LLM 异常必须展示中文友好提示，不能导致页面额外报错。
+- M3.3 AI 候选确认 API/UI 边界已完成：新增 `lib/ai/candidate-confirmation.ts`、`components/ai/candidate-confirmation-panel.tsx`、`components/ai/index.ts`、`tests/ai-candidate-confirmation.test.ts`、`tests/ai-candidate-confirmation-ui.test.ts`。
+- M3.3 确认边界：候选确认状态只存在于前端/helper，不新增持久化表；用户修改字段标记 `source=user`；确认写入复用 `POST /api/items` 并剥离来源、置信度、推断说明和 warnings。
+- M3.4 拍照识别物品已完成代码实现和自动验证：新增 `POST /api/items/recognize`、`lib/api/ai-recognition.ts`、`components/ai/photo-recognition-panel.tsx`、vision message 类型支持和 M3.4 测试。
+- M3.4 识别边界：图片以 data URL 作为本次 LLM 输入，不保存到服务器，不写入 `Item.imageUrl`；识别 API 只返回候选和 taxonomy 摘要，不直接创建正式物品、分类、位置或记录。
+- M3.4 真实试用反馈修复：`/settings` 测试连接只验证文本 chat/completions，不代表模型支持 vision；拍照识别若空候选，需优先检查 LLM warnings 和模型 vision 能力。
+- M3.4 parser 兼容策略：`source=vision/visual/photo` 归一为 `image`，0-100 百分比置信度归一为 0-1；Prompt 已包含 JSON 示例以减少非契约输出。
+- M3.4 用户验收已通过：用户确认系统能通过远端 API 正确识别图像；UI 设计和用户友好度 polish 暂放到 1.0 demo 发布后的后续阶段。
+- M3.5 订单截图解析已完成代码实现和自动验证：新增 `POST /api/items/parse-order`、`lib/api/ai-order-parsing.ts`、`components/ai/order-parsing-panel.tsx`、订单 Prompt taxonomy 上下文和 M3.5 测试。
+- M3.5 订单解析边界：订单截图以 data URL 作为本次 LLM 输入，不保存到服务器，不写入 `Item.imageUrl`；解析 API 只返回候选和 taxonomy 摘要，不直接创建正式物品、分类、位置或记录。
+- M3.5 字段来源：订单截图中可见的商品名、数量、采购价格、采购日期使用 `source=order`；缺失分类、位置和保质期可 `source=inference`，但必须带 reason。
+- M3.5 真实试用超时修复：`/api/ai/health` 只验证文本 chat/completions；拍照识别和订单截图解析属于 vision 请求，统一使用 `lib/api/ai-vision.ts` 的 `timeoutMs=120000`、`maxRetries=0` 策略，避免默认 30 秒超时 + 1 次重试造成约 60 秒 504；用户已确认订单识别功能修复。
+- M3.6 主页 AI 建议已完成代码实现和自动验证：新增 `POST /api/ai/dashboard-advice`、`lib/ai/dashboard-advice.ts`、`lib/api/ai-dashboard-advice.ts`、首页总览和手动 AI 建议面板。
+- M3 主页 AI 建议必须由用户手动触发，不做后台自动调用；远端 LLM 异常必须展示中文友好提示，不能导致页面额外报错；建议只读展示，不写数据库，不生成 M4 预警。
+- M3.6 真实试用超时修复：`/api/ai/health` 只验证轻量文本 chat/completions；主页 AI 建议属于库存摘要驱动的长耗时交互式文本生成，使用 `lib/api/ai-interactive.ts` 的 `timeoutMs=120000`、`maxRetries=0` 策略，避免默认 30 秒超时 + 1 次重试造成约 60 秒 504。
+- M3 阶段验收已完成：M3.1-M3.6 自动验证、代码边界扫描、密钥/调试日志检查均通过；用户已确认 `/settings` 测试连接、拍照识别、订单解析和主页 AI 建议真实可用。
+- M3.7 移动端拍照导入入口已完成自动验证和用户人工验收：手机端显示“拍照导入”，使用 `capture="environment"` 唤起后置摄像头；PC 端不展示专门拍照入口；后端识别 API、Prompt、parser 和候选确认契约未变。用户已确认手机端测试没问题。
+- M4.0 预警与统计规划已完成文档切片：M4 按 M4.1 预警计算纯逻辑、M4.2 预警同步与 API、M4.3 预警入口与列表 UI、M4.4 基础统计视图、M4.5 收口验收推进。
+- M4 预警规则决策：预警由确定性规则生成，不由 LLM 生成；默认临期阈值为 7 天；默认低库存阈值为数量小于等于 1；无保质期物品不触发临期或过期。
+- M4 状态决策：`Item.status` 只保存一个主状态，优先级为 `EXPIRED > EXPIRING > LOW_STOCK > NORMAL`；`Alert` 可按类型并存；用户处理预警只修改 `Alert.status`，不自动修改物品字段。
+- M4 范围边界：第三方推送只预留，不在 M4 初始实现；Docker、备份恢复、批量操作、标签管理、图片上传、订单历史和 AI 新能力不混入 M4。
+- M4.1 预警计算纯逻辑已完成：`lib/alerts/rules.ts` 提供 `evaluateItemAlerts`，`lib/alerts/sort.ts` 提供 `sortAlertsForDisplay`；`tests/alert-rules.test.ts` 覆盖过期、临期、低库存、复合预警、健康物品、自定义阈值和混合排序。
+- M4.2 预警同步与 API 已完成：`GET /api/alerts` 读取前同步 `Item.status` 与 `Alert`，支持类型/状态/分页查询并返回 summary；`PUT /api/alerts/:id/resolve` 只处理预警状态，不修改物品字段。
+- M4.3 预警入口与列表 UI 已完成代码实现和自动验证：`/alerts` 页面默认展示待处理预警，支持全部、已过期、临期、库存不足和已处理筛选；移动端使用卡片，PC 使用表格；“标记已处理”调用 `PUT /api/alerts/:id/resolve`。
+- M4.3 主页预警摘要已接入：`lib/dashboard/overview.ts` 读取同步后的预警摘要，`components/dashboard/home-dashboard.tsx` 只读展示轻量摘要和 `/alerts` 入口，不生成或修改预警。
+- M4.3 已处理预警回弹 bug 已修复：`GET /api/alerts` 同步时必须同时读取 `PENDING` 与 `RESOLVED`；同 item/type 已有 `RESOLVED` 时不得重建 `PENDING`，并应删除同 key 的待处理副本和重复已处理幽灵记录。
+- M4.3 已处理预警回弹 bug 已由用户于 2026-06-05 复验确认修复通过；用户随后同意按规划继续进入 M4.4，M4.3 收口完成。
+- M4.4 基础统计视图计划：先新增 `lib/api/stats.ts` 和统计 API route，再新增 `/stats` 页面、导航入口和 `components/stats/stats-dashboard.tsx`；只做基础数字、分类/位置分布、未分类/未设置位置和预警摘要，不做趋势、导出、高级图表或 AI 新能力。
+- M4.4 基础统计视图已完成代码实现和自动验证：`/stats` 展示基础数字、状态计数、分类/位置分布、未分类和未设置位置；统计 API 为 `GET /api/stats/overview` 与 `GET /api/stats/distribution`。
+- M4.4 基础统计视图已由用户于 2026-06-05 人工验收通过；M4.5 收口验证已完成，M4 预警与统计阶段整体完成。
+- M4.5 收口验证结果：`npm run test` 通过 34 个测试文件、113 个测试；`npm run typecheck`、`npm run lint`、`npm run build`、`npm run db:check` 均通过；代码卫生和范围扫描未发现 M4 非目标混入。
 - 本地 SQLite 开发库位于 `data/dev.db`，`data/` 被 Git 忽略。
 
 ## Conventions
@@ -61,6 +90,10 @@
 - 物品列表筛选控件位于 `components/inventory/item-list-controls.tsx`；`lib/inventory/item-view.ts` 同时负责列表筛选状态的查询串构建和安全解析。
 - 物品详情最近记录时间使用 `lib/inventory/item-view.ts` 的分钟级显示辅助函数，格式为 `YYYY-MM-DD HH:mm`。
 - 分类/位置图标 emoji 候选集中在 `lib/inventory/taxonomy-icon-options.ts`，UI 通过 `components/inventory/taxonomy-manager.tsx` 消费。
+- 拍照识别 UI 位于 `components/ai/photo-recognition-panel.tsx`，由 `/items` 的 `components/inventory/item-manager.tsx` 接入；识别成功后复用 M3.3 候选确认面板和正式物品 API。
+- 订单解析 UI 位于 `components/ai/order-parsing-panel.tsx`，由 `/items` 的 `components/inventory/item-manager.tsx` 接入；解析成功后复用 M3.3 候选确认面板和正式物品 API。
+- 主页 AI 建议 UI 位于 `components/ai/dashboard-advice-panel.tsx`，由 `components/dashboard/home-dashboard.tsx` 接入首页 `/`；建议成功后只在面板中展示，不执行写入。
+- 预警 UI 位于 `components/alerts/alert-dashboard.tsx`，由 `/alerts` 页面接入；首屏查询在 `app/alerts/page.tsx` 中执行，前端筛选和处理操作继续调用 `/api/alerts`。
 
 ## User Preferences
 
@@ -98,3 +131,23 @@
 - **2026-06-02**: M3.1.5 系统设置与 LLM 配置 UI 完成代码实现。原因：用户希望在系统设置页维护 LLM API，而不是只通过 `.env` 或 Docker 环境变量配置。
 - **2026-06-02**: 开发环境 fallback secret 持久化到 `data/dev-auth-secret`。原因：LLM API Key 使用认证密钥派生加密，进程内临时密钥会导致 dev server 重启后无法解密本地设置。
 - **2026-06-02**: M3.2 AI 结构化契约与解析校验完成。原因：拍照识别和订单解析前必须先统一 Prompt、JSON Schema、字段来源、置信度、语义默认值和异常响应恢复。
+- **2026-06-02**: M3.3 AI 候选确认 API/UI 边界完成。原因：M3.4/M3.5 真实识别前必须先建立候选编辑、用户修改语义和复用正式物品 API 写入的共用确认边界。
+- **2026-06-02**: M3.4 拍照识别物品完成代码实现和自动验证。原因：M3 需要把真实图片输入接到 M3.2 结构化候选和 M3.3 候选确认闭环，同时保持图片不持久化和不直接写库的边界。
+- **2026-06-02**: M3.4 拍照识别真实试用反馈修复完成。原因：用户反馈文本连接成功但识别空候选；诊断确认健康检查不覆盖 vision，且模型常见非标准输出会被 parser 过滤，需要 Prompt 示例、有限 parser 兼容和 warnings 诊断。
+- **2026-06-02**: M3.4 拍照识别通过用户验收。原因：修复后用户确认远端 API 能正确识别图像；体验 polish 不阻塞 1.0 demo 前的功能推进。
+- **2026-06-02**: M3.5 订单截图解析完成代码实现和自动验证。原因：M3 AI 入库需要支持订单截图多物品候选、价格和采购日期提取，并继续复用 M3.3 用户确认边界。
+- **2026-06-03**: M3.5 视觉请求超时修复完成。原因：用户反馈订单截图解析在文本连接测试成功时仍约 60 秒 504；诊断确认 vision 请求不应沿用 30 秒默认超时和自动重试，改为长超时且不自动重复提交图片。
+- **2026-06-03**: 用户确认 M3.5 订单识别功能修复。原因：真实订单截图解析已可用，可以进入 M3.6 主页 AI 建议规划。
+- **2026-06-03**: M3.6 主页 AI 建议完成代码实现和自动验证。原因：M3 需要补齐首页手动触发的只读 AI 建议闭环，帮助用户获得整理、补录、位置优化、消耗和信息核对建议，同时不混入 M4 预警。
+- **2026-06-03**: M3.6 主页 AI 建议真实试用超时修复完成。原因：用户反馈设置页连接测试成功但主页建议约 62 秒 504；诊断确认主页建议不应沿用默认 30 秒超时和自动重试，改为长超时且不自动重复提交建议请求。
+- **2026-06-03**: M3 阶段验收完成。原因：M3.1-M3.6 已完成自动验证和真实用户验收，AI 数据流保持候选/只读边界，下一步可进入 M4 预警与统计规划。
+- **2026-06-04**: M3.7 移动端拍照导入入口用户验收通过。原因：用户已在手机端确认“拍照导入”测试没问题；M3 可以正式切到 M4 预警与统计规划。
+- **2026-06-04**: M4.0 预警与统计文档规划完成。原因：进入 M4 编码前必须先明确临期、过期、库存不足、主状态优先级、Alert 并存、API 契约、统计范围和非目标，避免把推送、部署、图片或 AI 新能力混入。
+- **2026-06-04**: M4.1 预警计算纯逻辑完成。原因：M4.2 API 同步前需要可测试、可复用的确定性预警规则和排序模块。
+- **2026-06-04**: M4.2 预警同步与 API 完成。原因：M4.3 UI 前需要稳定的应用内预警查询、同步和处理接口。
+- **2026-06-04**: M4.3 预警入口与列表 UI 完成代码实现和自动验证。原因：用户需要在应用内看到并处理临期、过期和库存不足；因本切片有可见 UI，仍需用户人工验收后才能进入 M4.4。
+- **2026-06-04**: M4.3 已处理预警回弹 bug 修复完成。原因：打开“已处理”筛选会触发同步，旧逻辑忽略 `RESOLVED`，导致已处理预警被重新创建为待处理副本。
+- **2026-06-05**: 用户确认 M4.3 已处理预警回弹 bug 修复通过。原因：真实页面复验确认已处理预警不会在切换“已处理”筛选后回弹。
+- **2026-06-05**: M4.3 收口并进入 M4.4 计划确认。原因：用户同意按规划继续，M4.4 应先锁定统计 API/helper 与页面范围，再按 TDD 编码。
+- **2026-06-05**: M4.4 基础统计视图代码实现和自动验证完成。原因：M4 需要在预警闭环后补齐库存规模、预警数量、分类/位置分布和未分配数据的基础可视化入口。
+- **2026-06-05**: M4.4 用户验收和 M4.5 收口完成。原因：用户确认基础统计视图可用；完整验证、代码卫生、范围扫描和文档记忆同步均通过，下一步应进入 M5.0 部署与维护规划。

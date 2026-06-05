@@ -4,62 +4,69 @@
 > Max 100 lines. Rewrite on each update. Do not append.
 
 ## Status
-PAUSED
+ACTIVE
 
 ## Current Goal
-切换到新会话前完成项目记忆、交接文档和知识卫生检查。
+M4 预警与统计已完成并通过用户验收；当前准备进入 M5 部署与维护规划。
 
 ## Current Slice
-M3.2 AI 结构化契约与解析校验已完成并提交。下一步是 M3.3 AI 候选确认 API/UI 边界（待规划）。
+M4.5 M4 收口验收已完成：完整自动验证、代码卫生、范围扫描、docs 和 `.memory` 同步均完成。下一步应先做 M5.0 规划，不直接编码 Docker 或备份恢复。
 
 ## Last Known Good State
-M2 核心功能和体验打磨已完成并由用户确认。M3.1 已实现 OpenAI 兼容 LLM 配置、调用、健康检查和错误脱敏。M3.1.5 已实现 `/settings` LLM 配置 UI，用户已确认保存 API 并测试连接成功。M3.2 已新增 AI 候选类型、JSON Schema、Prompt 和解析校验。
+M2 核心功能和体验打磨已完成并由用户确认。M3.0-M3.7 已完成自动验证和用户人工验收。M4.0-M4.5 已完成自动验证、用户验收和阶段收口。
 
 ## Latest Commits
-- 代码提交：`899ab85 feat: 完成 M3.2 AI 结构化契约`
-- 交接记忆提交：`docs: 同步 M3.3 新会话交接记忆`
+- 最新代码提交仍是：`899ab85 feat: 完成 M3.2 AI 结构化契约`
+- M3.3-M3.7、M4.0-M4.5 相关代码和 `.memory` 会话记录尚未提交
 
 ## Active Files
 - `Readme.md`
+- `docs/TASKS.md`
+- `docs/AGENT_HANDOFF.md`
+- `docs/QUALITY.md`
+- `docs/CONTEXT.md`
+- `docs/PRD.md`
+- `docs/DOMAIN.md`
+- `docs/DECISIONS.md`
 - `.memory/context.md`
 - `.memory/index.md`
 - `.memory/knowledge.md`
-- `.memory/sessions/20260602-121330.md`
-- `docs/AGENT_HANDOFF.md`
+- `.memory/sessions/20260605-211544.md`
 
 ## Working State
-- `docs/TASKS.md` 当前切片已指向 M3.3（待规划），M3.2 验收项已完成。
-- `docs/AGENT_HANDOFF.md` 已更新到最新代码提交 `899ab85` 和最新交接记忆提交信息，并说明下一步为 M3.3 候选确认 API/UI 边界规划。
-- `Readme.md` 已从 M2 状态更新到 M3.2 完成、下一步 M3.3。
-- `lib/ai/schemas.ts` 定义候选字段来源 `image/order/inference/user`、候选字段、候选响应和 JSON Schema。
-- `lib/ai/prompts.ts` 定义候选专用 System Prompt、拍照识别 Prompt 和订单截图 Prompt。
-- `lib/ai/parse.ts` 支持解析纯 JSON、Markdown 代码块和夹杂说明中的 JSON；校验来源、置信度、数量、日期、价格、保质期天数和推断说明。
+- M4.1 预警计算纯逻辑已完成。
+- M4.2 预警同步与 API 已完成。
+- M4.3 `/alerts` 预警入口、列表、筛选和“标记已处理”已完成；已处理预警回弹 bug 已修复并由用户复验通过。
+- M4.4 `/stats` 基础统计视图已完成；用户已于 2026-06-05 验收通过。
+- M4.5 收口已完成；M4 不包含第三方推送、趋势统计、统计导出、ECharts、Docker、备份恢复、批量操作、标签管理或 AI 新能力。
 
 ## Current Problem / Blocker
-- 无代码阻塞。
-- 用户在开发 fallback secret 修复前保存的本地 LLM API Key 使用旧进程内 dev secret 加密；新进程中不可解密。需要用户在 `/settings` 中重新替换保存一次 API Key，之后重启也可稳定。
-- Git 命令会提示无法访问用户全局 ignore 文件，不阻塞操作。
+- 无 M4 功能阻塞。
+- 两个早期运行时验证临时 SQLite 文件可能仍在 `data/m3_6_runtime_*.db`，被 Git 忽略，不影响开发。
 
 ## Next Action
-- 新会话应先读取 `CLAUDE.md`、`.memory/`、`docs/AGENT_HANDOFF.md`、`docs/TASKS.md`、`docs/TECH_PLAN.md`、`docs/CONTEXT.md` 和 M3 相关 docs。
-- 按 handoff-driven-development 先输出 M3.3 切片计划并等待用户确认，然后再实现。
+进入 M5.0 部署与维护规划。先按 handoff-driven-development 输出 M5 切片计划并等待用户确认，再开始编码。
 
 ## Verification Status
-- M3.2 完成时已验证：`npm run test` 18 个测试文件、57 个测试通过；`npm run typecheck`、`npm run lint`、`npm run build`、`npm run db:check` 均通过。
-- 本次 neat-freak 收口未改业务代码，仅更新 README、handoff docs 和项目记忆；未重新运行完整测试。
+- M4.5 完整验证：`npm run test` 通过，34 个测试文件、113 个测试。
+- `npm run typecheck` 通过。
+- `npm run lint` 通过。
+- `npm run build` 通过，路由表包含 `/alerts`、`/stats`、`/api/alerts`、`/api/stats/overview` 和 `/api/stats/distribution`。
+- `npm run db:check` 通过，SQLite connection ok。
+- 代码卫生：`rg "DEBUG-|console\.log|console\.debug" app components lib tests` 未发现残留调试输出。
+- 密钥扫描：业务代码未发现硬编码真实密钥；测试中的 `sk-test`、`sk-secret` 为固定假值。
+- 范围扫描：未发现批量处理、趋势统计、统计导出、ECharts、Docker、备份恢复、AI 统计或阈值设置 UI 混入 M4。
+- 用户人工验收：预警页、预警处理和基础统计视图均已由用户确认可用。
 
 ## Relevant Docs
 - `docs/TASKS.md`
 - `docs/AGENT_HANDOFF.md`
-- `docs/API.md`
-- `docs/TECH_PLAN.md`
 - `docs/QUALITY.md`
-- `docs/DECISIONS.md`
 - `docs/DEPLOYMENT.md`
+- `docs/TECH_PLAN.md`
 
 ## Do Not Do
-- M3.3 规划确认前，不要直接实现候选确认 UI/API。
-- M3.3 不直接实现真实拍照识别、订单解析、主页 AI 建议或图片上传。
-- 不把 M4 的临期提醒、过期状态计算和库存预警混入 M3。
-- 不实现 Docker、备份恢复、批量操作或标签管理，除非后续切片明确进入对应范围。
-- 不提交 `docs/`、`CLAUDE.md`、`AGENTS.md`，它们按用户要求保持 Git 忽略；`.memory` 继续随代码提交。
+- M5.0 编码前必须先输出切片计划并等待用户确认。
+- 不把 M4 范围外能力回填进 M4：第三方推送、趋势统计、导出、高级图表、阈值设置 UI、AI 统计、批量操作、标签管理、图片上传或订单历史。
+- 不提交 `docs/`、`CLAUDE.md`、`AGENTS.md`；它们按用户要求保持 Git 忽略。
+- `.memory` 继续随代码提交。
