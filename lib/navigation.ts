@@ -1,5 +1,13 @@
-export type NavigationItemId = "categories" | "items" | "locations" | "overview" | "settings" | "ui";
-export type NavigationIconKey = "folder-tree" | "home" | "layout-grid" | "map-pin" | "package" | "settings";
+export type NavigationItemId = "alerts" | "categories" | "items" | "locations" | "overview" | "settings" | "stats" | "ui";
+export type NavigationIconKey =
+  | "bar-chart-3"
+  | "bell"
+  | "folder-tree"
+  | "home"
+  | "layout-grid"
+  | "map-pin"
+  | "package"
+  | "settings";
 
 export interface NavigationItem {
   readonly href: string;
@@ -20,6 +28,18 @@ export const navigationItems: readonly NavigationItem[] = [
     icon: "package",
     id: "items",
     label: "物品"
+  },
+  {
+    href: "/alerts",
+    icon: "bell",
+    id: "alerts",
+    label: "预警"
+  },
+  {
+    href: "/stats",
+    icon: "bar-chart-3",
+    id: "stats",
+    label: "统计"
   },
   {
     href: "/categories",

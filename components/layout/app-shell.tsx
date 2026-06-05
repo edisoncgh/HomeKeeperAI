@@ -5,6 +5,8 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
+  BarChart3,
+  Bell,
   FolderTree,
   Home,
   LayoutGrid,
@@ -30,6 +32,8 @@ interface AppShellProps {
 type NavigationPlacement = "bottom" | "sidebar";
 
 const iconMap: Record<NavigationIconKey, typeof Home> = {
+  "bar-chart-3": BarChart3,
+  bell: Bell,
   "folder-tree": FolderTree,
   home: Home,
   "layout-grid": LayoutGrid,
