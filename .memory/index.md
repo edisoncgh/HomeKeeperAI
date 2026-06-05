@@ -56,6 +56,7 @@
 - `sessions/20260605-005445.md` — M4.3 正式收口并写入 M4.4 基础统计视图切片计划，等待用户确认后按 TDD 编码。 [`tags: #m4 #stats #planning #handoff #memory #tdd`]
 - `sessions/20260605-011909.md` — 完成 M4.4 基础统计视图代码实现、自动验证和 docs/memory 同步；后续已由用户验收通过。 [`tags: #m4 #stats #frontend #api #tdd #verification #docs #memory`]
 - `sessions/20260605-211544.md` — 完成 M4.5 M4 收口验收，归档 M4.4 用户验收、完整验证、代码卫生和范围扫描结果。 [`tags: #m4 #acceptance #verification #docs #memory #handoff`]
+- `sessions/20260605-213459.md` — 完成 M3.3-M4.5 累积工作的 Git 分段提交收口，保留 .codegraph 为未跟踪本地索引。 [`tags: #git #commit #handoff #memory #m3 #m4`]
 
 ## Notes
 
