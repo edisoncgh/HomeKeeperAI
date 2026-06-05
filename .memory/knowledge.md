@@ -62,7 +62,8 @@
 - M4.4 基础统计视图已完成代码实现和自动验证：`/stats` 展示基础数字、状态计数、分类/位置分布、未分类和未设置位置；统计 API 为 `GET /api/stats/overview` 与 `GET /api/stats/distribution`。
 - M4.4 基础统计视图已由用户于 2026-06-05 人工验收通过；M4.5 收口验证已完成，M4 预警与统计阶段整体完成。
 - M4.5 收口验证结果：`npm run test` 通过 34 个测试文件、113 个测试；`npm run typecheck`、`npm run lint`、`npm run build`、`npm run db:check` 均通过；代码卫生和范围扫描未发现 M4 非目标混入。
-- 2026-06-05 已完成 M3.3-M4.5 累积工作的 Git 分段提交，提交链从 `103437f feat: 完成 M3.3 AI 候选确认边界` 到 `51efb32 docs: 完成 M4.5 收口记忆同步`。
+- 2026-06-05 已完成 M3.3-M4.5 累积工作的 Git 分段提交，提交链从 `103437f feat: 完成 M3.3 AI 候选确认边界` 到 `ba9a837 docs: 记录 M3-M4 提交收口`。
+- 2026-06-05 新会话交接前文档卫生检查已完成：`docs/TASKS.md` 已切到 M5.0 规划入口，`docs/AGENT_HANDOFF.md` 已更新最新提交和 `.codegraph/` 未跟踪说明。
 - 本地 SQLite 开发库位于 `data/dev.db`，`data/` 被 Git 忽略。
 
 ## Conventions
