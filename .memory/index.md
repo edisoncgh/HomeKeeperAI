@@ -74,3 +74,4 @@
 - Newest entries at the bottom
 - When session count exceeds 20, oldest entries should be archived into knowledge.md
 - Tags help with future retrieval. Use them liberally.
+- `sessions/20260609-172900.md` — 完成 1.0 demo 发布收口、Git 提交、静态 review、完整质量门和发布状态同步。 [`tags: #release #demo #git #review #verification #polish`]

@@ -2,7 +2,7 @@
 
 面向家庭局域网和 NAS 私有部署的家庭 AI 仓储管理 Web 应用。它用于记录家庭物品、分类、位置、保质期、库存状态和备份数据，并通过 OpenAI 兼容 LLM 服务辅助拍照识别、订单截图解析和首页整理建议。
 
-当前项目处于 **1.0 发布候选自动验证通过** 状态：M1-M5 规划内开发已完成，完整质量门、本地核心流程烟测、Docker/Compose 发布候选验证、代码卫生/密钥/范围扫描均已通过；仍等待最终人工验收和 Git 收口。
+当前项目处于 **1.0 demo 已发布** 状态：M1-M5 规划内开发已完成，Git 收口和静态 review 已完成，完整质量门、本地核心流程烟测、Docker/Compose 发布候选验证、代码卫生/密钥/范围扫描均已通过；下一阶段进入 1.0 demo 后 polish。
 
 ## 主要功能
 
@@ -183,11 +183,11 @@ npm run build
 npm run db:check
 ```
 
-M5.5 最近一次完整验证结果：
+1.0 demo 发布前最近一次完整验证结果：
 
 - `npm run lint` 通过
 - `npm run typecheck` 通过
-- `npm run test` 通过，37 个测试文件、125 个测试
+- `npm run test` 通过，37 个测试文件、131 个测试
 - `npm run build` 通过
 - `npm run db:check` 通过
 - Docker Compose 构建、启动、数据持久化和备份 Volume 验证通过
@@ -229,7 +229,7 @@ home-storage-protect-YYYYMMDD-HHmmss.db
 
 1.0 当前只备份 SQLite 数据库；图片上传目录仍是未来能力预留。
 
-## 1.0 发布候选人工验收清单
+## 1.0 demo 验收清单
 
 - `/setup` 创建管理员并登录。
 - `/categories` 和 `/locations` 创建、编辑、删除分类和位置。
