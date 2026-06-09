@@ -2,7 +2,7 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { createSessionToken, verifySessionToken } from "@/lib/auth/session";
+import { createSessionToken, getSessionCookieOptions, shouldUseSecureSessionCookie, verifySessionToken } from "@/lib/auth/session";
 
 const globalForAuthTest = globalThis as typeof globalThis & {
   authDevSecret?: string;
@@ -32,7 +32,12 @@ describe("auth session token", () => {
       secret: "test-secret"
     });
 
-    expect(verifySessionToken(token, { secret: "test-secret" })).toMatchObject({
+    expect(
+      verifySessionToken(token, {
+        now: new Date("2026-05-30T00:00:00.000Z"),
+        secret: "test-secret"
+      })
+    ).toMatchObject({
       role: "ADMIN",
       userId: 7,
       username: "admin"
@@ -86,5 +91,24 @@ describe("auth session token", () => {
     const { getAuthSecret: getReloadedAuthSecret } = await import("@/lib/auth/session");
 
     expect(getReloadedAuthSecret()).toBe(firstSecret);
+  });
+
+  it("requires an explicit AUTH_SECRET in production", async () => {
+    vi.stubEnv("NODE_ENV", "production");
+    vi.stubEnv("AUTH_SECRET", "");
+
+    const { getAuthSecret } = await import("@/lib/auth/session");
+
+    expect(() => getAuthSecret()).toThrow("AUTH_SECRET 未配置");
+  });
+
+  it("uses secure cookies by default in production", () => {
+    expect(shouldUseSecureSessionCookie({ NODE_ENV: "production" })).toBe(true);
+    expect(getSessionCookieOptions()).toEqual(expect.objectContaining({ httpOnly: true, sameSite: "lax" }));
+  });
+
+  it("allows local HTTP deployments to opt out of secure cookies explicitly", () => {
+    expect(shouldUseSecureSessionCookie({ AUTH_COOKIE_SECURE: "false", NODE_ENV: "production" })).toBe(false);
+    expect(shouldUseSecureSessionCookie({ AUTH_COOKIE_SECURE: "true", NODE_ENV: "development" })).toBe(true);
   });
 });

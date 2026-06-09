@@ -25,6 +25,8 @@ interface TokenUser {
   username: string;
 }
 
+type EnvMap = NodeJS.ProcessEnv;
+
 const globalForAuth = globalThis as typeof globalThis & {
   authDevSecret?: string;
 };
@@ -73,8 +75,13 @@ export function getSessionCookieOptions() {
     maxAge: SESSION_MAX_AGE_SECONDS,
     path: "/",
     sameSite: "lax" as const,
-    secure: process.env.NODE_ENV === "production"
+    secure: shouldUseSecureSessionCookie()
   };
+}
+
+export function shouldUseSecureSessionCookie(env: EnvMap = process.env) {
+  const override = parseBooleanEnv(env.AUTH_COOKIE_SECURE);
+  return override ?? env.NODE_ENV === "production";
 }
 
 export function getExpiredSessionCookieOptions() {
@@ -121,6 +128,18 @@ function readDevAuthSecret(secretPath: string) {
 
   const secret = readFileSync(secretPath, "utf8").trim();
   return secret || null;
+}
+
+function parseBooleanEnv(value: string | undefined) {
+  if (value === "true") {
+    return true;
+  }
+
+  if (value === "false") {
+    return false;
+  }
+
+  return null;
 }
 
 function sign(encodedPayload: string, secret: string) {

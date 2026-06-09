@@ -23,9 +23,14 @@ export function sortAlertsForDisplay<T extends SortableAlert>(alerts: T[]) {
 }
 
 function getUrgencySortValue(alert: SortableAlert) {
+  const fallback = Number.MAX_SAFE_INTEGER;
   if (alert.type === "LOW_STOCK") {
-    return alert.quantity ?? Number.MAX_SAFE_INTEGER;
+    return isFiniteNumber(alert.quantity) ? alert.quantity : fallback;
   }
 
-  return alert.daysUntilExpiry ?? Number.MAX_SAFE_INTEGER;
+  return isFiniteNumber(alert.daysUntilExpiry) ? alert.daysUntilExpiry : fallback;
+}
+
+function isFiniteNumber(value: unknown): value is number {
+  return typeof value === "number" && Number.isFinite(value);
 }

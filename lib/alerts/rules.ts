@@ -71,6 +71,10 @@ function calculateDaysUntilExpiry(expiryDate: AlertRuleItem["expiryDate"], curre
 
   const expiry = toUtcDateOnly(expiryDate);
   const current = toUtcDateOnly(currentDate ?? new Date());
+  if (!expiry || !current) {
+    return null;
+  }
+
   const millisecondsPerDay = 24 * 60 * 60 * 1000;
 
   return Math.round((expiry.getTime() - current.getTime()) / millisecondsPerDay);
@@ -78,6 +82,9 @@ function calculateDaysUntilExpiry(expiryDate: AlertRuleItem["expiryDate"], curre
 
 function toUtcDateOnly(value: Date | string) {
   const date = typeof value === "string" ? new Date(value) : value;
+  if (Number.isNaN(date.getTime())) {
+    return null;
+  }
 
   return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
 }

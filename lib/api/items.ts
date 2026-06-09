@@ -1,4 +1,5 @@
 import { Prisma } from "@prisma/client";
+import { markAlertsDirty } from "@/lib/api/alerts";
 import { apiError, apiOk } from "@/lib/api/response";
 import { getCurrentUser } from "@/lib/auth/current-user";
 import { prisma } from "@/lib/prisma";
@@ -79,6 +80,7 @@ export async function createItem(request: Request) {
   }
 
   const item = await createItemWithRecord(parsed.data, user.id);
+  markAlertsDirty();
   return apiOk({ item }, 201);
 }
 
@@ -119,6 +121,7 @@ export async function deleteItem(id: number) {
 
   try {
     const item = await prisma.item.delete({ select: itemBaseSelect, where: { id } });
+    markAlertsDirty();
     return apiOk({ item });
   } catch (error) {
     return handleItemError(error);
@@ -160,6 +163,7 @@ async function createItemWithRecord(data: ItemInput, operatorId: number) {
 async function updateItemRecord(id: number, data: ItemInput) {
   try {
     const item = await prisma.item.update({ data, select: itemDetailSelect, where: { id } });
+    markAlertsDirty();
     return apiOk({ item });
   } catch (error) {
     return handleItemError(error);

@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
   getCurrentUser: vi.fn(),
+  markAlertsDirty: vi.fn(),
   prisma: {
     $transaction: vi.fn(),
     category: { findUnique: vi.fn() },
@@ -20,6 +21,10 @@ vi.mock("@/lib/auth/current-user", () => ({
 
 vi.mock("@/lib/prisma", () => ({
   prisma: mocks.prisma
+}));
+
+vi.mock("@/lib/api/alerts", () => ({
+  markAlertsDirty: mocks.markAlertsDirty
 }));
 
 import { createItem, listItems } from "@/lib/api/items";
@@ -57,6 +62,7 @@ describe("item API helpers", () => {
     expect(mocks.tx.itemRecord.create).toHaveBeenCalledWith({
       data: { itemId: 7, notes: "创建物品", operatorId: 5, quantityChange: 3, type: "IN" }
     });
+    expect(mocks.markAlertsDirty).toHaveBeenCalledOnce();
   });
 
   it("combines search, filters, sorting and pagination for item lists", async () => {

@@ -103,6 +103,20 @@ describe("evaluateItemAlerts", () => {
     expect(result).toEqual({ alerts: [], status: "NORMAL" });
   });
 
+  it("treats invalid expiry dates as missing dates", () => {
+    const result = evaluateItemAlerts(
+      {
+        expiryDate: "not-a-date",
+        id: 1,
+        name: "无效日期物品",
+        quantity: 4
+      },
+      { currentDate: "2026-06-04" }
+    );
+
+    expect(result).toEqual({ alerts: [], status: "NORMAL" });
+  });
+
   it("honors custom expiry and low stock thresholds", () => {
     const result = evaluateItemAlerts(
       {
@@ -141,5 +155,14 @@ describe("sortAlertsForDisplay", () => {
     ]);
 
     expect(sorted.map((alert) => alert.itemId)).toEqual([4, 3, 6, 2, 5, 1]);
+  });
+
+  it("places invalid urgency values after valid values", () => {
+    const sorted = sortAlertsForDisplay([
+      { daysUntilExpiry: Number.NaN, itemId: 1, type: "EXPIRING" },
+      { daysUntilExpiry: 2, itemId: 2, type: "EXPIRING" }
+    ]);
+
+    expect(sorted.map((alert) => alert.itemId)).toEqual([2, 1]);
   });
 });

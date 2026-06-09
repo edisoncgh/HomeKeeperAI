@@ -5,6 +5,12 @@ import { getCurrentUser } from "@/lib/auth/current-user";
 import { prisma } from "@/lib/prisma";
 
 const ALERT_PAGE_SIZE = 20;
+const ALERT_SYNC_FRESH_MS = 30_000;
+
+let alertSyncDirty = true;
+let alertSyncedAt = 0;
+let alertSyncInFlight: Promise<void> | null = null;
+let alertSyncVersion = 0;
 
 const alertItemSelect = {
   category: { select: { color: true, icon: true, id: true, name: true } },
@@ -52,7 +58,7 @@ export async function listAlerts(request: Request) {
 }
 
 export async function queryAlerts(query: AlertQuery = createDefaultAlertQuery()) {
-  await syncAlerts();
+  await syncAlertsIfNeeded();
 
   const where = buildAlertWhere(query);
   const [alerts, total, summary] = await Promise.all([
@@ -71,8 +77,14 @@ export async function queryAlerts(query: AlertQuery = createDefaultAlertQuery())
 }
 
 export async function getSyncedAlertSummary() {
-  await syncAlerts();
+  await syncAlertsIfNeeded();
   return getAlertSummary();
+}
+
+export function markAlertsDirty() {
+  alertSyncDirty = true;
+  alertSyncedAt = 0;
+  alertSyncVersion += 1;
 }
 
 export async function resolveAlert(id: number) {
@@ -153,6 +165,31 @@ async function syncAlerts() {
       await tx.alert.deleteMany({ where: { id: { in: duplicateAlertIds } } });
     }
   });
+}
+
+async function syncAlertsIfNeeded() {
+  if (!alertSyncDirty && Date.now() - alertSyncedAt < ALERT_SYNC_FRESH_MS) {
+    return;
+  }
+
+  if (alertSyncInFlight) {
+    await alertSyncInFlight;
+    return;
+  }
+
+  const syncVersion = alertSyncVersion;
+  alertSyncInFlight = syncAlerts()
+    .then(() => {
+      if (syncVersion === alertSyncVersion) {
+        alertSyncDirty = false;
+        alertSyncedAt = Date.now();
+      }
+    })
+    .finally(() => {
+      alertSyncInFlight = null;
+    });
+
+  await alertSyncInFlight;
 }
 
 export function parseAlertQuery(searchParams: URLSearchParams): AlertQuery {

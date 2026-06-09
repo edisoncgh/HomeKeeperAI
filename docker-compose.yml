@@ -1,0 +1,31 @@
+services:
+  app:
+    image: home-storage-assistant:${IMAGE_TAG:-latest}
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        NODE_IMAGE: ${NODE_IMAGE:-node:22.22.0-slim}
+    restart: unless-stopped
+    ports:
+      - "${PORT:-3000}:3000"
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+      HOSTNAME: "0.0.0.0"
+      DATABASE_URL: "file:/app/data/home-storage.db"
+      BACKUP_DIR: ${BACKUP_DIR:-/app/backups}
+      AUTH_SECRET: ${AUTH_SECRET:?Set AUTH_SECRET in .env before running docker compose.}
+      AUTH_COOKIE_SECURE: ${AUTH_COOKIE_SECURE:-true}
+      LLM_BASE_URL: ${LLM_BASE_URL:-}
+      LLM_MODEL: ${LLM_MODEL:-}
+      LLM_API_KEY: ${LLM_API_KEY:-}
+    volumes:
+      - home-storage-data:/app/data
+      - home-storage-uploads:/app/uploads
+      - home-storage-backups:/app/backups
+
+volumes:
+  home-storage-data:
+  home-storage-uploads:
+  home-storage-backups:

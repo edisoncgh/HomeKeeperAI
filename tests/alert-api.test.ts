@@ -26,11 +26,12 @@ vi.mock("@/lib/prisma", () => ({
   prisma: mocks.prisma
 }));
 
-import { listAlerts, resolveAlert } from "@/lib/api/alerts";
+import { listAlerts, markAlertsDirty, queryAlerts, resolveAlert } from "@/lib/api/alerts";
 
 describe("alert API helpers", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    markAlertsDirty();
     mocks.prisma.$transaction.mockImplementation(async (input) => {
       return typeof input === "function" ? input(mocks.prisma) : Promise.all(input);
     });
@@ -210,6 +211,18 @@ describe("alert API helpers", () => {
         where: { status: "PENDING", type: "LOW_STOCK" }
       })
     );
+  });
+
+  it("reuses a recent alert sync until item data is marked dirty", async () => {
+    await queryAlerts();
+    await queryAlerts();
+
+    expect(mocks.prisma.$transaction).toHaveBeenCalledTimes(1);
+
+    markAlertsDirty();
+    await queryAlerts();
+
+    expect(mocks.prisma.$transaction).toHaveBeenCalledTimes(2);
   });
 
   it("rejects unauthenticated resolve requests", async () => {

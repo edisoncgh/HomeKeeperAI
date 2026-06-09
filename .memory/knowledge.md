@@ -64,6 +64,25 @@
 - M4.5 收口验证结果：`npm run test` 通过 34 个测试文件、113 个测试；`npm run typecheck`、`npm run lint`、`npm run build`、`npm run db:check` 均通过；代码卫生和范围扫描未发现 M4 非目标混入。
 - 2026-06-05 已完成 M3.3-M4.5 累积工作的 Git 分段提交，提交链从 `103437f feat: 完成 M3.3 AI 候选确认边界` 到 `ba9a837 docs: 记录 M3-M4 提交收口`。
 - 2026-06-05 新会话交接前文档卫生检查已完成：`docs/TASKS.md` 已切到 M5.0 规划入口，`docs/AGENT_HANDOFF.md` 已更新最新提交和 `.codegraph/` 未跟踪说明。
+- 2026-06-05 最新交接基线已推进到 `ea2247b docs: 固化 M5 交接快照`，`git status --short` 仍仅剩 `.codegraph/` 未跟踪。
+- M5.0 部署与维护规划已完成：M5 拆分为 M5.1 Dockerfile 与运行时镜像、M5.2 Docker Compose 与数据持久化、M5.3 初始化设置流程与生产环境配置校验、M5.4 数据备份与恢复、M5.5 性能与测试补强和 1.0 发布候选收口。
+- M5 部署边界：生产推荐 `DATABASE_URL=file:/app/data/home-storage.db`，容器使用 `PORT`，生产必须配置稳定高熵 `AUTH_SECRET`，Volume 规划为 `/app/data`、`/app/uploads`、`/app/backups`；`uploads` 仅预留未来图片能力，M5 不实现图片上传。
+- M5.1 Dockerfile 与运行时镜像已实现并完成 Docker 复验：默认使用 `node:22.22.0-slim`、Next standalone 输出、非 root `node` 用户、`/app/data`/`/app/uploads`/`/app/backups` 运行目录，构建阶段执行 `npm ci`、`npx prisma generate` 和 `npm run build`；运行阶段先执行 `node docker/init-db.mjs` 幂等初始化 SQLite schema，再执行 `node server.js`；Docker/Linux 运行时不依赖本地 Windows/M 盘 wasm SWC/readlink patch。
+- M5.1 Docker 复验结果：`docker build --build-arg NODE_IMAGE=docker.m.daocloud.io/library/node:22.22.0-slim -t home-storage-assistant:m5.1 .` 通过；容器以 `DATABASE_URL=file:/app/data/home-storage.db`、`AUTH_SECRET`、`PORT=3000` 启动后 `/setup` 返回 200；SQLite 文件位于 `/app/data/home-storage.db`；重启后初始化脚本输出 `SQLite schema already initialized.`。
+- M5.1 修复记录：当前网络访问 Docker Hub 默认 `node` 镜像超时，因此 Dockerfile 保留官方默认镜像并新增 `NODE_IMAGE` build arg 作为可达镜像源兜底；容器内 `npm ci` 曾因 Linux lockfile 缺少嵌套 `picomatch@2.3.2` 失败，已用 Linux Node 容器同步 `package-lock.json`。
+- M5.2 Docker Compose 与数据持久化已完成：`docker-compose.yml` 从当前 Dockerfile 构建镜像，支持 `IMAGE_TAG` 和 `NODE_IMAGE`，固定容器内 `DATABASE_URL=file:/app/data/home-storage.db`，挂载 `home-storage-data`、`home-storage-uploads`、`home-storage-backups`，并使用 `${AUTH_SECRET:?...}` 要求生产密钥。
+- M5.2 验证结果：`docker compose -p home-storage-m5-2-test config --quiet` 通过；`AUTH_SECRET` 为空时按预期失败；`APP_PORT` 未出现在 Compose/env 示例中；`docker compose up -d --build` 通过；setup 创建用户后 `users=1`；强制重建容器后 `users=1`，验证 SQLite Volume 持久化生效；测试 Compose 项目已 `down -v` 清理。
+- M5.3 初始化设置流程与生产环境配置校验已完成：生产 Cookie 默认继续带 `Secure`；新增 `AUTH_COOKIE_SECURE` 显式部署开关，Compose 默认 `true`，局域网纯 HTTP 部署可设为 `false`；已验证 `/setup`、`/api/users/me`、`/settings`、LLM 环境默认值、数据库设置优先级和容器重建后持久化读取。
+- M5.4 数据备份与恢复已完成：新增 `lib/backups/sqlite.ts`、`lib/api/backups.ts`、`app/api/backups/*` 和 `components/settings/backup-maintenance-panel.tsx`，在 `/settings` 支持 SQLite 手动备份、列表、恢复和删除。
+- M5.4 备份边界：备份只保护 SQLite 数据库；备份文件写入 `BACKUP_DIR` 或 `/app/backups`；恢复接口为 `POST /api/backups/restore`，要求 `{ id, confirm: true }`，恢复前创建 `home-storage-protect-...db` 保护性备份；自动备份、云同步和图片目录备份暂缓。
+- M5.4 验证结果：`npm run lint`、`npm run typecheck`、`npm run test`、`npm run build`、`npm run db:check` 均通过，完整测试为 37 个测试文件、125 个测试；临时 SQLite 回滚验证和 Docker Compose `/app/backups` Volume 验证均通过。
+- M5.4 Docker 修复记录：旧的 `/api/backups/[id]/restore` 动态嵌套路由改为静态 `/api/backups/restore`；Dockerfile builder 阶段补齐 `/app/data`、`/app/uploads`、`/app/backups`，修复 Linux builder page data 阶段 build worker SIGTRAP。
+- M5.5 性能与测试补强、1.0 发布候选自动收口已完成：完整质量门、本地临时 SQLite 核心流程烟测、Docker/Compose 发布候选验证、性能/卫生扫描、密钥扫描和范围扫描均通过；当前等待用户人工验收。
+- M5.5 验证结果：`npm run lint`、`npm run typecheck`、`npm run test`、`npm run build`、`npm run db:check` 均通过，完整测试为 37 个测试文件、125 个测试；Docker Compose 测试项目已清理容器、网络和 Volume。
+- M5.5 发布候选边界：自动验证通过只表示可进入 1.0 RC 人工验收；若人工验收发现问题，应作为小范围 bugfix 切片处理，不混入 AI 新能力、图片上传、批量操作、出库、库存调整或大规模 UI polish。
+- 2026-06-08 代码审查 Medium 修复已完成：无效保质期日期不再产生 `NaN` 预警排序值；预警查询新增短时同步缓存并由物品创建/更新/删除标记 dirty；同秒备份追加递增后缀并排他复制避免覆盖；备份面板网络失败会恢复按钮状态并显示错误。
+- 2026-06-08 `.gitignore` 已将运行时备份目录规则从 `backups/` 收窄为 `/backups/`，避免误忽略 `lib/backups/` 代码目录；根目录备份数据仍不提交。
+- 代码审查 Medium 修复验证结果：`npm run lint`、`npm run typecheck`、`npm run test`、`npm run build`、`npm run db:check` 均通过，完整测试为 37 个测试文件、130 个测试。
 - 本地 SQLite 开发库位于 `data/dev.db`，`data/` 被 Git 忽略。
 
 ## Conventions
@@ -79,6 +98,9 @@
 - 应用主导航配置集中在 `lib/navigation.ts`；当前仅暴露已存在页面 `/` 和 `/ui`，避免导航到未实现路由。
 - 密码使用 Node `crypto.scrypt` 加随机盐哈希；会话 token 使用 HMAC 签名并写入 HttpOnly Cookie。
 - 生产环境必须配置 `AUTH_SECRET`；依赖 Cookie 或数据库状态的页面必须 `force-dynamic`。
+- 生产认证 Cookie 默认 `Secure`；HTTPS 或反向代理部署保持 `AUTH_COOKIE_SECURE=true`，纯 HTTP 局域网部署需显式设置 `AUTH_COOKIE_SECURE=false`。
+- 备份目录通过 `BACKUP_DIR` 配置；Compose 默认 `/app/backups`，并挂载 `home-storage-backups`。
+- 备份文件名必须匹配 `home-storage-YYYYMMDD-HHmmss.db`、`home-storage-YYYYMMDD-HHmmss-001.db` 或对应 `home-storage-protect-...` 形式，备份 id 与文件名一致。
 - 本地和容器端口配置使用 `PORT`，不要使用旧的 `APP_PORT`。
 - 首次管理员当前通过 `/setup` 页面创建，不使用环境变量硬编码初始管理员密码。
 - 开发环境未配置 `AUTH_SECRET` 时，fallback secret 写入 `data/dev-auth-secret`，同时仍缓存在 `globalThis.authDevSecret` 中；测试可用 `AUTH_DEV_SECRET_PATH` 指定临时路径。
@@ -154,3 +176,13 @@
 - **2026-06-05**: M4.4 基础统计视图代码实现和自动验证完成。原因：M4 需要在预警闭环后补齐库存规模、预警数量、分类/位置分布和未分配数据的基础可视化入口。
 - **2026-06-05**: M4.4 用户验收和 M4.5 收口完成。原因：用户确认基础统计视图可用；完整验证、代码卫生、范围扫描和文档记忆同步均通过，下一步应进入 M5.0 部署与维护规划。
 - **2026-06-05**: M3.3-M4.5 Git 分段提交收口完成。原因：用户要求将长期积累未提交工作按 `.memory` 开发记忆尽量拆成一条条 commit，便于后续回滚和审阅。
+- **2026-06-05**: M5.0 部署与维护规划完成。原因：进入 Dockerfile、Compose、初始化配置、备份恢复和 1.0 候选收口编码前，必须先明确运行时边界、Volume、SQLite 路径、生产密钥、恢复安全和验证方式。
+- **2026-06-06**: M5.1 选择 glibc slim Node 镜像 + Next standalone + `node server.js`。原因：Prisma SQLite 原生引擎在 glibc slim 镜像上兼容性更稳；standalone 输出避免运行时依赖完整源码和 `next start`；Docker/Linux 不需要本地 Windows/M 盘 wasm SWC/readlink patch。
+- **2026-06-06**: M5.1 Docker 阻塞已解决。原因：用户授权后 Docker Desktop daemon 可用；默认 Docker Hub 拉取超时，用 `NODE_IMAGE` build arg 指向可达 `node:22.22.0-slim` 镜像源完成构建；同时用 Linux Node 容器同步 lockfile，修复 Linux `npm ci` 缺少嵌套 `picomatch@2.3.2` 的问题。
+- **2026-06-06**: M5.2 Compose 采用强制 `AUTH_SECRET` 和 Volume 持久化策略。原因：生产容器不能静默使用开发 fallback secret，SQLite 必须位于 Volume，`uploads`/`backups` 只做目录预留。
+- **2026-06-06**: M5.2 Compose 启动和持久化验收通过。原因：用户重新审批后 Docker Desktop daemon 可用，Compose 构建启动成功，setup 写入用户后强制重建容器仍能从 `home-storage-data` Volume 读取 `users=1`。
+- **2026-06-06**: 修复认证会话测试的日期时间炸弹。原因：测试固定在 2026-05-30 创建 7 天有效 token，但验证时使用真实当前时间，到了 2026-06-06 后会自然过期；改为固定验证时间保证测试可重复。
+- **2026-06-06**: M5.3 生产 Cookie 与局域网 HTTP 策略完成。原因：生产默认 Secure Cookie 更安全，但家庭 NAS 纯 HTTP 访问会导致登录后 Cookie 不回传；新增 `AUTH_COOKIE_SECURE` 显式开关，默认 true，仅在明确局域网 HTTP 部署时设为 false。
+- **2026-06-06**: M5.4 SQLite 手动备份与恢复完成。原因：家庭 NAS 1.0 上线前需要可验证的数据保护能力；先实现手动备份、列表、恢复、删除、恢复确认、保护性备份和文件名白名单，自动备份和图片目录备份留到后续切片。
+- **2026-06-07**: M5.5 1.0 发布候选自动收口完成。原因：M2-M5 核心能力已经闭环，发布前重点转为完整质量门、运行时烟测、Docker/Compose 持久化、备份恢复、性能/卫生扫描和人工验收准备。
+- **2026-06-08**: 代码审查 Medium 修复完成。原因：发布候选前提升确定性预警、备份恢复和设置页维护体验的防御性，且不改变已确认的 M4 已处理预警不回弹语义。

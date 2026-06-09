@@ -58,6 +58,16 @@
 - `sessions/20260605-211544.md` — 完成 M4.5 M4 收口验收，归档 M4.4 用户验收、完整验证、代码卫生和范围扫描结果。 [`tags: #m4 #acceptance #verification #docs #memory #handoff`]
 - `sessions/20260605-213459.md` — 完成 M3.3-M4.5 累积工作的 Git 分段提交收口，保留 .codegraph 为未跟踪本地索引。 [`tags: #git #commit #handoff #memory #m3 #m4`]
 - `sessions/20260605-214508.md` — 完成 M5.0 新会话前项目记忆与开发文档卫生检查，修正 handoff 和 TASKS 陈旧点。 [`tags: #handoff #memory #docs #neat-freak #m5`]
+- `sessions/20260605-221842.md` — 完成 M5.0 部署与维护规划文档切片，明确 Docker、Compose、Volume、SQLite、初始化、备份恢复和验证边界。 [`tags: #m5 #planning #deployment #docs #memory #handoff`]
+- `sessions/20260606-000913.md` — 完成 M5.1 Dockerfile 与 standalone 运行镜像实现及自动验证，Docker daemon 未运行导致镜像构建待复验。 [`tags: #m5 #docker #standalone #deployment #verification #handoff`]
+- `sessions/20260606-022858.md` — 复审 M5.1 Dockerfile 与运行时镜像成果，本地验证通过，Docker daemon 仍未运行导致构建复验阻塞。 [`tags: #m5 #docker #review #diagnose #verification #handoff`]
+- `sessions/20260606-030620.md` — 解决 M5.1 Docker 复验阻塞，修复 Linux 容器 npm ci lockfile 问题，并完成镜像构建、容器启动、SQLite 初始化和页面访问验证。 [`tags: #m5 #docker #diagnose #bugfix #verification #handoff`]
+- `sessions/20260606-170004.md` — 完成 M5.2 Compose 配置实现和静态校验，修复认证测试日期问题，Compose 运行与持久化验收因 Docker daemon 不可连接待补。 [`tags: #m5 #docker #compose #deployment #verification #handoff`]
+- `sessions/20260606-201344.md` — 完成 M5.3 初始化设置流程与生产配置校验，新增 AUTH_COOKIE_SECURE 部署开关并验证 setup/settings 持久化。 [`tags: #m5 #deployment #auth #settings #docker #verification #handoff`]
+- `sessions/20260606-231802.md` — 完成 M5.4 SQLite 数据备份与恢复，实现设置页备份面板、备份 API、保护性恢复和 Docker Compose 备份 Volume 验证。 [`tags: #m5 #backup #sqlite #docker #settings #verification #docs #memory #handoff`]
+- `sessions/20260607-034000.md` — 完成 M5.5 性能与测试补强、1.0 发布候选自动收口，完整质量门、本地烟测、Docker/Compose RC 验证和卫生扫描均通过。 [`tags: #m5 #release-candidate #verification #docker #compose #memory #handoff`]
+- `sessions/20260607-041500.md` — 将 README 改写为正式仓库入口，补充功能、部署、环境变量、备份恢复、验证和 1.0 RC 验收指南。 [`tags: #readme #docs #m5 #release-candidate #deployment #memory`]
+- `sessions/20260608-134246.md` — 修复代码审查 Medium 问题，补强预警日期/同步、同秒备份、备份面板网络失败并完成验证。 [`tags: #review #bugfix #m4 #m5 #alerts #backup #verification #memory`]
 
 ## Notes
 
