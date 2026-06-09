@@ -224,6 +224,23 @@ describe("alert API helpers", () => {
 
     expect(mocks.prisma.$transaction).toHaveBeenCalledTimes(2);
   });
+  it("reruns sync for a query that waited while in-flight sync was marked dirty", async () => {
+    let releaseSync!: () => void;
+    mocks.prisma.$transaction.mockImplementationOnce(
+      () =>
+        new Promise<void>((resolve) => {
+          releaseSync = resolve;
+        })
+    );
+
+    const firstQuery = queryAlerts();
+    markAlertsDirty();
+    const secondQuery = queryAlerts();
+    releaseSync();
+    await Promise.all([firstQuery, secondQuery]);
+
+    expect(mocks.prisma.$transaction).toHaveBeenCalledTimes(2);
+  });
 
   it("rejects unauthenticated resolve requests", async () => {
     mocks.getCurrentUser.mockResolvedValue(null);

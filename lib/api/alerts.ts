@@ -174,7 +174,7 @@ async function syncAlertsIfNeeded() {
 
   if (alertSyncInFlight) {
     await alertSyncInFlight;
-    return;
+    return syncAlertsIfNeeded();
   }
 
   const syncVersion = alertSyncVersion;
