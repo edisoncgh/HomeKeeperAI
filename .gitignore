@@ -18,6 +18,10 @@ CLAUDE.md
 AGENTS.md
 .CLAUDE
 .AGENTS
+#//////////////////////////
+#Project memory (local only)
+#//////////////////////////
+.memory/
 
 #//////////////////////////
 #Project docs
