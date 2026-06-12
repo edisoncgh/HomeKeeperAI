@@ -15,6 +15,7 @@ services:
       HOSTNAME: "0.0.0.0"
       DATABASE_URL: "file:/app/data/home-storage.db"
       BACKUP_DIR: ${BACKUP_DIR:-/app/backups}
+      UPLOAD_DIR: ${UPLOAD_DIR:-/app/uploads}
       AUTH_SECRET: ${AUTH_SECRET:?Set AUTH_SECRET in .env before running docker compose.}
       AUTH_COOKIE_SECURE: ${AUTH_COOKIE_SECURE:-true}
       LLM_BASE_URL: ${LLM_BASE_URL:-}
