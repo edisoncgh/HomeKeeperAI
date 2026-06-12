@@ -1,5 +1,5 @@
 import { constants } from "node:fs";
-import { copyFile, mkdir, readdir, stat, unlink } from "node:fs/promises";
+import { copyFile, cp, mkdir, readFile, readdir, rename, rm, stat, unlink, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 
 type BackupKind = "backup" | "protect";
@@ -8,6 +8,7 @@ export interface BackupEnv {
   BACKUP_DIR?: string;
   DATABASE_URL?: string;
   NODE_ENV?: string;
+  UPLOAD_DIR?: string;
 }
 
 interface BackupOptions {
@@ -20,7 +21,17 @@ export interface BackupSummary {
   createdAt: string;
   fileName: string;
   id: string;
+  includesUploads: boolean;
   sizeBytes: number;
+  uploadFileCount: number;
+  uploadSizeBytes: number;
+}
+
+interface UploadManifest {
+  createdAt: string;
+  fileCount: number;
+  rootName: "uploads";
+  totalSizeBytes: number;
 }
 
 export class BackupError extends Error {
@@ -33,6 +44,7 @@ export class BackupError extends Error {
 }
 
 const BACKUP_FILE_PATTERN = /^home-storage-(?:protect-)?\d{8}-\d{6}(?:-\d{3})?\.db$/;
+const UPLOAD_MANIFEST_FILE = "manifest.json";
 
 export function resolveDatabaseFilePath(databaseUrl = process.env.DATABASE_URL, cwd = process.cwd()) {
   if (!databaseUrl?.startsWith("file:")) {
@@ -56,14 +68,38 @@ export function getBackupDirectory(env: BackupEnv = process.env, cwd = process.c
   return env.NODE_ENV === "production" ? "/app/backups" : join(cwd, "backups");
 }
 
+export function getUploadDirectory(env: BackupEnv = process.env, cwd = process.cwd()) {
+  const configured = env.UPLOAD_DIR?.trim();
+  if (configured) {
+    return resolve(cwd, configured);
+  }
+
+  return env.NODE_ENV === "production" ? "/app/uploads" : join(cwd, "uploads");
+}
+
 export async function createDatabaseBackup(options: BackupOptions = {}) {
   const env = options.env ?? process.env;
   const backupDir = getBackupDirectory(env);
   const databasePath = resolveDatabaseFilePath(env.DATABASE_URL);
+  const now = options.now ?? new Date();
 
   await assertDatabaseFile(databasePath);
   await mkdir(backupDir, { recursive: true });
-  const fileName = await copyDatabaseToUniqueBackup(databasePath, backupDir, options.now ?? new Date(), options.kind ?? "backup");
+  const fileName = await copyDatabaseToUniqueBackup(databasePath, backupDir, now, options.kind ?? "backup");
+  const snapshotPath = createUploadSnapshotPath(fileName, backupDir);
+  try {
+    await snapshotUploadsIfPresent(getUploadDirectory(env), snapshotPath, now);
+  } catch (error) {
+    await Promise.all([
+      unlink(resolveBackupPath(fileName, backupDir)).catch((cleanupError) =>
+        console.warn("清理数据库备份文件失败:", cleanupError instanceof Error ? cleanupError.message : cleanupError)
+      ),
+      rm(snapshotPath, { force: true, recursive: true }).catch((cleanupError) =>
+        console.warn("清理上传快照失败:", cleanupError instanceof Error ? cleanupError.message : cleanupError)
+      )
+    ]);
+    throw error;
+  }
   return createBackupSummary(fileName, backupDir);
 }
 
@@ -85,6 +121,7 @@ export async function restoreDatabaseBackup(id: string, options: { env?: BackupE
   await assertDatabaseFile(sourcePath);
   await mkdir(dirname(databasePath), { recursive: true });
   await copyFile(sourcePath, databasePath);
+  await restoreUploadSnapshotIfPresent(createUploadSnapshotPath(id, backupDir), getUploadDirectory(env));
   return createBackupSummary(id, backupDir);
 }
 
@@ -92,6 +129,7 @@ export async function deleteDatabaseBackup(id: string, options: { env?: BackupEn
   const backupDir = getBackupDirectory(options.env ?? process.env);
   const backupPath = resolveBackupPath(id, backupDir);
   await assertDatabaseFile(backupPath);
+  await rm(createUploadSnapshotPath(id, backupDir), { force: true, recursive: true });
   await unlink(backupPath);
 }
 
@@ -144,12 +182,160 @@ function formatTimestamp(date: Date) {
 
 async function createBackupSummary(fileName: string, backupDir: string): Promise<BackupSummary> {
   const backupStat = await stat(resolveBackupPath(fileName, backupDir));
+  const uploadManifest = await readUploadManifest(createUploadSnapshotPath(fileName, backupDir));
   return {
     createdAt: parseCreatedAt(fileName).toISOString(),
     fileName,
     id: fileName,
-    sizeBytes: backupStat.size
+    includesUploads: uploadManifest !== null,
+    sizeBytes: backupStat.size,
+    uploadFileCount: uploadManifest?.fileCount ?? 0,
+    uploadSizeBytes: uploadManifest?.totalSizeBytes ?? 0
   };
+}
+
+async function snapshotUploadsIfPresent(uploadDir: string, snapshotDir: string, now: Date) {
+  if (!(await isDirectory(uploadDir))) {
+    return;
+  }
+
+  await rm(snapshotDir, { force: true, recursive: true });
+  await mkdir(snapshotDir, { recursive: true });
+  await cp(uploadDir, snapshotDir, { recursive: true });
+  const manifest = await createUploadManifest(snapshotDir, now);
+  await writeFile(join(snapshotDir, UPLOAD_MANIFEST_FILE), JSON.stringify(manifest, null, 2), "utf8");
+}
+
+async function restoreUploadSnapshotIfPresent(snapshotDir: string, uploadDir: string) {
+  if (!(await isDirectory(snapshotDir))) {
+    return;
+  }
+
+  await mkdir(dirname(uploadDir), { recursive: true });
+  const tempDir = `${uploadDir}.restore-${Date.now()}`;
+  const previousDir = `${uploadDir}.previous-${Date.now()}`;
+
+  await rm(tempDir, { force: true, recursive: true });
+  await rm(previousDir, { force: true, recursive: true });
+  await cp(snapshotDir, tempDir, {
+    filter: (source) => source !== join(snapshotDir, UPLOAD_MANIFEST_FILE),
+    recursive: true
+  });
+
+  const hadUploadDir = await pathExists(uploadDir);
+  if (hadUploadDir) {
+    await rename(uploadDir, previousDir);
+  }
+
+  try {
+    await rename(tempDir, uploadDir);
+    await rm(previousDir, { force: true, recursive: true });
+  } catch (error) {
+    if (hadUploadDir && !(await pathExists(uploadDir))) {
+      await rename(previousDir, uploadDir).catch((rollbackError) =>
+        console.warn("回滚上传目录失败:", rollbackError instanceof Error ? rollbackError.message : rollbackError)
+      );
+    }
+    throw error;
+  } finally {
+    await rm(tempDir, { force: true, recursive: true }).catch((cleanupError) =>
+      console.warn("清理临时上传目录失败:", cleanupError instanceof Error ? cleanupError.message : cleanupError)
+    );
+  }
+}
+
+async function createUploadManifest(snapshotDir: string, now: Date): Promise<UploadManifest> {
+  const summary = await summarizeDirectory(snapshotDir);
+  return {
+    createdAt: now.toISOString(),
+    fileCount: summary.fileCount,
+    rootName: "uploads",
+    totalSizeBytes: summary.totalSizeBytes
+  };
+}
+
+async function readUploadManifest(snapshotDir: string): Promise<UploadManifest | null> {
+  try {
+    const parsed = JSON.parse(await readFile(join(snapshotDir, UPLOAD_MANIFEST_FILE), "utf8"));
+    return parseUploadManifest(parsed) ?? (await summarizeUploadSnapshot(snapshotDir));
+  } catch {
+    return summarizeUploadSnapshot(snapshotDir);
+  }
+}
+
+async function summarizeUploadSnapshot(snapshotDir: string): Promise<UploadManifest | null> {
+  if (!(await isDirectory(snapshotDir))) {
+    return null;
+  }
+
+  const summary = await summarizeDirectory(snapshotDir);
+  return { createdAt: new Date(0).toISOString(), fileCount: summary.fileCount, rootName: "uploads", totalSizeBytes: summary.totalSizeBytes };
+}
+
+function parseUploadManifest(value: unknown): UploadManifest | null {
+  if (!value || typeof value !== "object") {
+    return null;
+  }
+  const manifest = value as Record<string, unknown>;
+  if (manifest.rootName !== "uploads" || typeof manifest.fileCount !== "number" || typeof manifest.totalSizeBytes !== "number") {
+    return null;
+  }
+  return {
+    createdAt: typeof manifest.createdAt === "string" ? manifest.createdAt : new Date(0).toISOString(),
+    fileCount: manifest.fileCount,
+    rootName: "uploads",
+    totalSizeBytes: manifest.totalSizeBytes
+  };
+}
+
+async function summarizeDirectory(dir: string) {
+  let fileCount = 0;
+  let totalSizeBytes = 0;
+  const entries = await readdir(dir, { withFileTypes: true });
+
+  for (const entry of entries) {
+    if (entry.isSymbolicLink()) {
+      continue;
+    }
+
+    const entryPath = join(dir, entry.name);
+    if (entry.isDirectory()) {
+      const child = await summarizeDirectory(entryPath);
+      fileCount += child.fileCount;
+      totalSizeBytes += child.totalSizeBytes;
+    } else if (entry.isFile() && entry.name !== UPLOAD_MANIFEST_FILE) {
+      fileCount += 1;
+      totalSizeBytes += (await stat(entryPath)).size;
+    }
+  }
+
+  return { fileCount, totalSizeBytes };
+}
+
+async function isDirectory(dir: string) {
+  try {
+    return (await stat(dir)).isDirectory();
+  } catch {
+    return false;
+  }
+}
+
+async function pathExists(filePath: string) {
+  try {
+    await stat(filePath);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function createUploadSnapshotPath(fileName: string, backupDir: string) {
+  const decoded = decodeBackupId(fileName);
+  if (!isBackupFileName(decoded)) {
+    throw new BackupError("备份文件名不合法。", 400);
+  }
+
+  return resolve(backupDir, `${decoded}.uploads`);
 }
 
 async function assertDatabaseFile(filePath: string) {

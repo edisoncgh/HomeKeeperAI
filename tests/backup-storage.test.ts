@@ -1,4 +1,4 @@
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { afterEach, describe, expect, it } from "vitest";
@@ -35,6 +35,7 @@ describe("SQLite backup storage", () => {
     const backups = await listDatabaseBackups({ env });
 
     expect(backup.fileName).toBe("home-storage-20260606-123456.db");
+    expect(backup.includesUploads).toBe(false);
     expect(backups).toEqual([backup]);
 
     await restoreDatabaseBackup(backup.id, { env });
@@ -42,6 +43,43 @@ describe("SQLite backup storage", () => {
 
     await deleteDatabaseBackup(backup.id, { env });
     expect(await listDatabaseBackups({ env })).toEqual([]);
+  });
+
+  it("snapshots, restores, and deletes upload files with database backups", async () => {
+    const env = createTempDatabase("before");
+    const now = new Date("2026-06-06T12:34:56.000Z");
+    const imagePath = join(env.UPLOAD_DIR, "items", "1", "milk.jpg");
+    const thumbnailPath = join(env.UPLOAD_DIR, "items", "1", "milk-thumb.jpg");
+    mkdirSync(join(env.UPLOAD_DIR, "items", "1"), { recursive: true });
+    writeFileSync(imagePath, "image-before", "utf8");
+    writeFileSync(thumbnailPath, "thumb-before", "utf8");
+
+    const backup = await createDatabaseBackup({ env, now });
+    const uploadSnapshotDir = join(env.BACKUP_DIR, `${backup.fileName}.uploads`);
+    writeFileSync(env.databasePath, "after", "utf8");
+    writeFileSync(imagePath, "image-after", "utf8");
+    rmSync(thumbnailPath, { force: true });
+    mkdirSync(join(env.UPLOAD_DIR, "items", "2"), { recursive: true });
+    writeFileSync(join(env.UPLOAD_DIR, "items", "2", "extra.jpg"), "extra", "utf8");
+
+    expect(backup).toMatchObject({
+      includesUploads: true,
+      uploadFileCount: 2,
+      uploadSizeBytes: "image-before".length + "thumb-before".length
+    });
+    expect(readFileSync(join(uploadSnapshotDir, "items", "1", "milk.jpg"), "utf8")).toBe("image-before");
+
+    await restoreDatabaseBackup(backup.id, { env });
+
+    expect(readFileSync(env.databasePath, "utf8")).toBe("before");
+    expect(readFileSync(imagePath, "utf8")).toBe("image-before");
+    expect(readFileSync(thumbnailPath, "utf8")).toBe("thumb-before");
+    expect(existsSync(join(env.UPLOAD_DIR, "items", "2", "extra.jpg"))).toBe(false);
+
+    await deleteDatabaseBackup(backup.id, { env });
+
+    expect(existsSync(join(env.BACKUP_DIR, backup.fileName))).toBe(false);
+    expect(existsSync(uploadSnapshotDir)).toBe(false);
   });
 
   it("does not overwrite an existing backup created in the same second", async () => {
@@ -76,6 +114,7 @@ describe("SQLite backup storage", () => {
     tempDir = mkdtempSync(join(tmpdir(), "hsa-backup-"));
     const dataDir = join(tempDir, "data");
     const backupDir = join(tempDir, "backups");
+    const uploadDir = join(tempDir, "uploads");
     const databasePath = join(dataDir, "home-storage.db");
     mkdirSync(dataDir, { recursive: true });
     writeFileSync(databasePath, content, "utf8");
@@ -83,6 +122,7 @@ describe("SQLite backup storage", () => {
     return {
       BACKUP_DIR: backupDir,
       DATABASE_URL: `file:${databasePath}`,
+      UPLOAD_DIR: uploadDir,
       databasePath
     };
   }

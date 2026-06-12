@@ -38,7 +38,7 @@ export function BackupMaintenancePanel({ initialBackups }: BackupMaintenancePane
           <DatabaseBackup aria-hidden size={20} />
           数据备份
         </CardTitle>
-        <CardDescription>SQLite 数据库备份、恢复和删除。</CardDescription>
+        <CardDescription>SQLite 数据库与物品图片备份、恢复和删除。</CardDescription>
       </CardHeader>
       <div className="flex flex-col gap-4">
         <BackupActions busyAction={busyAction} runAction={runAction} />
@@ -105,7 +105,7 @@ function BackupListItem({
       <div className="min-w-0">
         <p className="break-all text-sm font-medium text-text-primary">{backup.fileName}</p>
         <p className="mt-1 text-xs text-text-tertiary">
-          {formatDateTime(backup.createdAt)} · {formatBytes(backup.sizeBytes)}
+          {formatDateTime(backup.createdAt)} · 数据库 {formatBytes(backup.sizeBytes)} · {formatUploadSummary(backup)}
         </p>
       </div>
       <div className="flex gap-2">
@@ -143,7 +143,7 @@ async function listBackups() {
 }
 
 function restoreBackup(backup: BackupSummary, runAction: (action: string, request: () => Promise<BackupResponse>) => Promise<void>) {
-  if (!window.confirm(`确认恢复备份 ${backup.fileName}？当前数据库会先创建保护性备份。`)) {
+  if (!window.confirm(`确认恢复备份 ${backup.fileName}？当前数据库和图片目录会先创建保护性备份。`)) {
     return;
   }
 
@@ -202,4 +202,12 @@ function formatBytes(value: number) {
   }
 
   return `${Math.round(value / 1024)} KB`;
+}
+
+function formatUploadSummary(backup: BackupSummary) {
+  if (!backup.includesUploads) {
+    return "无图片快照";
+  }
+
+  return `图片 ${backup.uploadFileCount} 个 / ${formatBytes(backup.uploadSizeBytes)}`;
 }

@@ -47,6 +47,8 @@ describe("backup API helpers", () => {
   it("creates and lists backups for authenticated users", async () => {
     const env = prepareEnv("before");
     mocks.getCurrentUser.mockResolvedValue({ id: 1, username: "admin" });
+    mkdirSync(join(env.UPLOAD_DIR, "items", "1"), { recursive: true });
+    writeFileSync(join(env.UPLOAD_DIR, "items", "1", "milk.jpg"), "image-before", "utf8");
 
     const created = await createBackup({ env, now: new Date("2026-06-06T12:34:56.000Z") });
     const listed = await listBackups({ env });
@@ -55,8 +57,10 @@ describe("backup API helpers", () => {
 
     expect(created.status).toBe(201);
     expect(createdBody.data.backup.fileName).toBe("home-storage-20260606-123456.db");
+    expect(createdBody.data.backup).toMatchObject({ includesUploads: true, uploadFileCount: 1 });
     expect(listed.status).toBe(200);
     expect(listedBody.data.backups).toHaveLength(1);
+    expect(listedBody.data.backups[0]).toMatchObject({ includesUploads: true, uploadFileCount: 1 });
   });
 
   it("requires explicit confirmation before restoring a backup", async () => {
@@ -77,6 +81,8 @@ describe("backup API helpers", () => {
     const created = await createBackup({ env, now: new Date("2026-06-06T12:34:56.000Z") });
     const body = await created.json();
     writeFileSync(env.databasePath, "after", "utf8");
+    mkdirSync(join(env.UPLOAD_DIR, "items", "1"), { recursive: true });
+    writeFileSync(join(env.UPLOAD_DIR, "items", "1", "milk.jpg"), "image-after", "utf8");
 
     const response = await restoreBackup(body.data.backup.id, jsonRequest({ confirm: true }), {
       env,
@@ -85,7 +91,9 @@ describe("backup API helpers", () => {
 
     expect(response.status).toBe(200);
     expect(readFileSync(env.databasePath, "utf8")).toBe("before");
+    expect(readFileSync(join(env.UPLOAD_DIR, "items", "1", "milk.jpg"), "utf8")).toBe("image-after");
     expect(readdirSync(env.BACKUP_DIR)).toContain("home-storage-protect-20260606-123500.db");
+    expect(readdirSync(env.BACKUP_DIR)).toContain("home-storage-protect-20260606-123500.db.uploads");
     expect(mocks.prisma.$disconnect).toHaveBeenCalled();
   });
 
@@ -93,6 +101,7 @@ describe("backup API helpers", () => {
     tempDir = mkdtempSync(join(tmpdir(), "hsa-backup-api-"));
     const dataDir = join(tempDir, "data");
     const backupDir = join(tempDir, "backups");
+    const uploadDir = join(tempDir, "uploads");
     const databasePath = join(dataDir, "home-storage.db");
     mkdirSync(dataDir, { recursive: true });
     writeFileSync(databasePath, content, "utf8");
@@ -100,6 +109,7 @@ describe("backup API helpers", () => {
     return {
       BACKUP_DIR: backupDir,
       DATABASE_URL: `file:${databasePath}`,
+      UPLOAD_DIR: uploadDir,
       databasePath
     };
   }

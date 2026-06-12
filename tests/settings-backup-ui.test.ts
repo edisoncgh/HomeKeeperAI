@@ -17,7 +17,10 @@ describe("BackupMaintenancePanel", () => {
             createdAt: "2026-06-06T12:34:56.000Z",
             fileName: "home-storage-20260606-123456.db",
             id: "home-storage-20260606-123456.db",
-            sizeBytes: 2048
+            includesUploads: true,
+            sizeBytes: 2048,
+            uploadFileCount: 2,
+            uploadSizeBytes: 4096
           }
         ]
       })
@@ -27,6 +30,8 @@ describe("BackupMaintenancePanel", () => {
     expect(html).toContain("创建备份");
     expect(html).toContain("home-storage-20260606-123456.db");
     expect(html).toContain("2 KB");
+    expect(html).toContain("图片 2 个");
+    expect(html).toContain("4 KB");
     expect(html).toContain("恢复");
     expect(html).toContain("删除");
   });
