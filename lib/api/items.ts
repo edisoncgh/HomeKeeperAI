@@ -20,6 +20,20 @@ const itemBaseSelect = {
   expiryDate: true,
   id: true,
   imageUrl: true,
+  images: {
+    orderBy: { sortOrder: "asc" as const },
+    select: {
+      filename: true,
+      id: true,
+      isPrimary: true,
+      mimeType: true,
+      size: true,
+      sortOrder: true,
+      thumbnailUrl: true,
+      url: true
+    },
+    take: 10
+  },
   location: { select: taxonomySummarySelect },
   locationId: true,
   name: true,

@@ -3,7 +3,8 @@ import type { AiItemCandidate } from "@/lib/ai/schemas";
 import {
   applyUserCandidateEdit,
   buildAiCandidateConfirmations,
-  buildAiConfirmedItemPayload
+  buildAiConfirmedItemPayload,
+  confirmAiCandidateItem
 } from "@/lib/ai/candidate-confirmation";
 
 const categories = [
@@ -130,6 +131,107 @@ describe("buildAiConfirmedItemPayload", () => {
       purchaseDate: null,
       purchasePrice: 18.9,
       quantity: 2
+    });
+  });
+});
+
+describe("confirmAiCandidateItem image attachment", () => {
+  it("uploads the source image after the confirmed item is created", async () => {
+    const [confirmation] = buildAiCandidateConfirmations({
+      candidates: [{ name: { confidence: 0.92, source: "image", value: "牛奶" } }],
+      categories,
+      locations,
+      today: "2026-06-01",
+      warnings: []
+    });
+    const file = new File(["image"], "milk.jpg", { type: "image/jpeg" });
+    const calls: string[] = [];
+
+    const result = await import("@/lib/ai/candidate-confirmation").then(({ confirmAiCandidateItem }) =>
+      confirmAiCandidateItem(
+        confirmation,
+        async (path, init) => {
+          calls.push(String(path));
+          if (path === "/api/items") {
+            return new Response(JSON.stringify({ data: { item: { id: 12, name: "牛奶" } } }), { status: 201 });
+          }
+          if (path === "/api/items/12/images") {
+            expect(init?.body).toBeInstanceOf(FormData);
+            expect((init?.body as FormData).get("file")).toBe(file);
+            return new Response(JSON.stringify({ data: { id: 1 } }), { status: 201 });
+          }
+          return new Response(JSON.stringify({ data: { item: { id: 12, images: [{ id: 1 }], name: "牛奶" } } }), {
+            status: 200
+          });
+        },
+        { imageFile: file }
+      )
+    );
+
+    expect(result).toEqual({
+      item: { id: 12, images: [{ id: 1 }], name: "牛奶" },
+      ok: true,
+      warning: "候选已写入物品，图片已保存。"
+    });
+    expect(calls).toEqual(["/api/items", "/api/items/12/images", "/api/items/12"]);
+  });
+
+  it("keeps the created item when source image upload throws", async () => {
+    const [confirmation] = buildAiCandidateConfirmations({
+      candidates: [{ name: { confidence: 0.92, source: "image", value: "牛奶" } }],
+      categories,
+      locations,
+      today: "2026-06-01",
+      warnings: []
+    });
+    const file = new File(["image"], "milk.jpg", { type: "image/jpeg" });
+
+    const result = await confirmAiCandidateItem(
+      confirmation,
+      async (path) => {
+        if (path === "/api/items") {
+          return new Response(JSON.stringify({ data: { item: { id: 12, name: "牛奶" } } }), { status: 201 });
+        }
+        throw new Error("network failed");
+      },
+      { imageFile: file }
+    );
+
+    expect(result).toEqual({
+      item: { id: 12, name: "牛奶" },
+      ok: true,
+      warning: "候选已写入物品，但图片保存失败；可在物品详情中重新上传。"
+    });
+  });
+
+  it("keeps the created item when refreshing after image upload throws", async () => {
+    const [confirmation] = buildAiCandidateConfirmations({
+      candidates: [{ name: { confidence: 0.92, source: "image", value: "牛奶" } }],
+      categories,
+      locations,
+      today: "2026-06-01",
+      warnings: []
+    });
+    const file = new File(["image"], "milk.jpg", { type: "image/jpeg" });
+
+    const result = await confirmAiCandidateItem(
+      confirmation,
+      async (path) => {
+        if (path === "/api/items") {
+          return new Response(JSON.stringify({ data: { item: { id: 12, name: "牛奶" } } }), { status: 201 });
+        }
+        if (path === "/api/items/12/images") {
+          return new Response(JSON.stringify({ data: { id: 1 } }), { status: 201 });
+        }
+        throw new Error("refresh failed");
+      },
+      { imageFile: file }
+    );
+
+    expect(result).toEqual({
+      item: { id: 12, name: "牛奶" },
+      ok: true,
+      warning: "候选已写入物品，图片已保存；详情刷新失败，请稍后重新打开物品。"
     });
   });
 });

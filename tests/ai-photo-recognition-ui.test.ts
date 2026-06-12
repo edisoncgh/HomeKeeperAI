@@ -14,12 +14,11 @@ describe("PhotoRecognitionPanel", () => {
     );
 
     expect(html).toContain("AI 拍照识别");
-    expect(html).toContain("不会保存图片");
+    expect(html).toContain("确认入库后会把本次图片保存到对应物品");
     expect(html).toContain("name=\"galleryImage\"");
     expect(html).toContain("accept=\"image/*\"");
     expect(html).toContain("name=\"userHint\"");
     expect(html).toContain("识别候选");
-    expect(html).toContain("也可以继续手动添加物品");
   });
 
   it("renders a mobile-only camera capture entry and a regular image picker fallback", () => {

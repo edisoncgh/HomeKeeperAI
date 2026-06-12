@@ -32,6 +32,7 @@ interface RecognitionApiResponse {
 
 export function PhotoRecognitionPanel({ categories, locations, onItemCreated }: PhotoRecognitionPanelProps) {
   const [error, setError] = useState("");
+  const [imageFile, setImageFile] = useState<File | null>(null);
   const [imageDataUrl, setImageDataUrl] = useState("");
   const [isRecognizing, setIsRecognizing] = useState(false);
   const [result, setResult] = useState<RecognitionResult | null>(null);
@@ -40,6 +41,7 @@ export function PhotoRecognitionPanel({ categories, locations, onItemCreated }: 
   async function chooseImage(file: File | undefined) {
     setError("");
     setResult(null);
+    setImageFile(file ?? null);
     setImageDataUrl(file ? await readFileAsDataUrl(file) : "");
   }
 
@@ -67,7 +69,7 @@ export function PhotoRecognitionPanel({ categories, locations, onItemCreated }: 
         onSubmit={submitRecognition}
         onUserHintChange={setUserHint}
       />
-      <RecognitionResults onItemCreated={onItemCreated} result={result} />
+      <RecognitionResults onItemCreated={onItemCreated} result={result} sourceImageFile={imageFile} />
     </Card>
   );
 }
@@ -79,7 +81,7 @@ function RecognitionHeader() {
         <Sparkles className="text-primary" size={18} />
         AI 拍照识别
       </CardTitle>
-      <CardDescription>手机端可直接拍照生成候选；本次识别不会保存图片，也可以继续手动添加物品。</CardDescription>
+      <CardDescription>手机端可直接拍照生成候选；确认入库后会把本次图片保存到对应物品。</CardDescription>
     </CardHeader>
   );
 }
@@ -150,6 +152,7 @@ function RecognitionForm(props: {
 function RecognitionResults(props: {
   onItemCreated?: (item: unknown) => void;
   result: RecognitionResult | null;
+  sourceImageFile: File | null;
 }) {
   if (!props.result) {
     return null;
@@ -164,6 +167,7 @@ function RecognitionResults(props: {
           key={confirmation.id}
           locations={props.result?.locations ?? []}
           onConfirmed={props.onItemCreated}
+          sourceImageFile={props.sourceImageFile ?? undefined}
         />
       ))}
     </div>

@@ -3,6 +3,7 @@
 import { FormEvent, useMemo, useState } from "react";
 import { CheckCircle2, ImageIcon, PackagePlus, Pencil, Plus, RefreshCw, Trash2, X } from "lucide-react";
 import { OrderParsingPanel, PhotoRecognitionPanel } from "@/components/ai";
+import { ItemImageManager } from "@/components/inventory/item-image-manager";
 import { ItemListControls, type PaginationView } from "@/components/inventory/item-list-controls";
 import { Button, Card, CardDescription, CardHeader, CardTitle, Input, Tag } from "@/components/ui";
 import {
@@ -24,6 +25,17 @@ export interface TaxonomyOptionView {
   name: string;
 }
 
+export interface ItemImageView {
+  id: number;
+  filename: string;
+  mimeType: string;
+  size: number;
+  url: string;
+  thumbnailUrl: null | string;
+  isPrimary: boolean;
+  sortOrder: number;
+}
+
 export interface ItemRecordView {
   createdAt: string;
   id: number;
@@ -42,6 +54,7 @@ export interface ItemView {
   expiryDate: null | string;
   id: number;
   imageUrl: null | string;
+  images: ItemImageView[];
   location: null | TaxonomyOptionView;
   locationId: null | number;
   name: string;
@@ -63,6 +76,9 @@ interface ItemManagerProps {
 }
 
 type PanelMode = "create" | "edit" | "view";
+
+const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
+const MAX_IMAGE_SIZE = 10 * 1024 * 1024;
 
 interface ItemManagerState {
   detailLoadingId: null | number;
@@ -104,6 +120,54 @@ export function ItemManager({ categories, initialFilters, initialItems, initialP
     setState((current) => ({ ...current, error: "", isSubmitting: true, success: "" }));
     const response = await requestItem(`/api/items/${selectedItem.id}`, { method: "DELETE" });
     setState((current) => handleDeleteResponse(current, selectedItem.id, response));
+  }
+
+  async function uploadSelectedItemImage(file: File) {
+    if (!selectedItem) {
+      return { message: "请先选择物品。", ok: false };
+    }
+    const validation = validateImageBeforeUpload(file);
+    if (!validation.ok) {
+      return validation;
+    }
+
+    setState((current) => ({ ...current, error: "", isSubmitting: true, success: "" }));
+    const response = await uploadItemImage(selectedItem.id, file);
+    setState((current) => handleImageMutationResponse(current, selectedItem, response, "图片已保存。"));
+    return response.ok ? { ok: true } : { message: response.message, ok: false };
+  }
+
+  async function deleteSelectedItemImage(imageId: number) {
+    if (!selectedItem) {
+      return { message: "请先选择物品。", ok: false };
+    }
+
+    setState((current) => ({ ...current, error: "", isSubmitting: true, success: "" }));
+    const response = await deleteItemImage(selectedItem.id, imageId);
+    setState((current) => handleImageMutationResponse(current, selectedItem, response, "图片已删除。"));
+    return response.ok ? { ok: true } : { message: response.message, ok: false };
+  }
+
+  async function setSelectedItemPrimaryImage(imageId: number) {
+    if (!selectedItem) {
+      return { message: "请先选择物品。", ok: false };
+    }
+
+    setState((current) => ({ ...current, error: "", isSubmitting: true, success: "" }));
+    const response = await setPrimaryItemImage(selectedItem.id, imageId);
+    setState((current) => handleImageMutationResponse(current, selectedItem, response, "主图已更新。"));
+    return response.ok ? { ok: true } : { message: response.message, ok: false };
+  }
+
+  async function moveSelectedItemImage(imageId: number, direction: "down" | "up") {
+    if (!selectedItem) {
+      return { message: "请先选择物品。", ok: false };
+    }
+
+    setState((current) => ({ ...current, error: "", isSubmitting: true, success: "" }));
+    const response = await moveItemImage(selectedItem.id, imageId, direction);
+    setState((current) => handleImageMutationResponse(current, selectedItem, response, "图片顺序已更新。"));
+    return response.ok ? { ok: true } : { message: response.message, ok: false };
   }
 
   async function submitFilters(event: FormEvent<HTMLFormElement>) {
@@ -171,8 +235,12 @@ export function ItemManager({ categories, initialFilters, initialItems, initialP
           onCancel={() => setState(cancelEdit)}
           onChange={(form) => setState((current) => ({ ...current, form }))}
           onDelete={deleteSelectedItem}
+          onDeleteImage={deleteSelectedItemImage}
           onEdit={() => selectedItem && setState(startEdit(selectedItem))}
+          onMoveImage={moveSelectedItemImage}
+          onSetPrimaryImage={setSelectedItemPrimaryImage}
           onSubmit={submitForm}
+          onUploadImage={uploadSelectedItemImage}
           success={state.success}
           locations={locations}
         />
@@ -343,13 +411,29 @@ function DesktopItemTable({
 }
 
 function ItemListPrimary({ item, loading }: { item: ItemView; loading: boolean }) {
+  const primaryImage = item.images.find((img) => img.isPrimary) ?? item.images[0];
+  const imageSrc = primaryImage?.thumbnailUrl || primaryImage?.url || item.imageUrl;
+
   return (
-    <span className="min-w-0 text-left">
-      <span className="flex items-center gap-2">
-        <span className="truncate text-base font-semibold text-text-primary md:text-sm">{item.name}</span>
-        {loading ? <RefreshCw aria-hidden className="animate-spin text-primary" size={14} /> : null}
+    <span className="flex min-w-0 items-start gap-3">
+      {imageSrc ? (
+        <img
+          alt={item.name}
+          className="size-12 shrink-0 rounded-card object-cover"
+          src={imageSrc}
+        />
+      ) : (
+        <span className="flex size-12 shrink-0 items-center justify-center rounded-card bg-surface-secondary">
+          <ImageIcon aria-hidden className="text-text-tertiary" size={20} />
+        </span>
+      )}
+      <span className="min-w-0 text-left">
+        <span className="flex items-center gap-2">
+          <span className="truncate text-base font-semibold text-text-primary md:text-sm">{item.name}</span>
+          {loading ? <RefreshCw aria-hidden className="animate-spin text-primary" size={14} /> : null}
+        </span>
+        <span className="mt-1 block truncate text-xs text-text-tertiary">{item.description || "暂无描述"}</span>
       </span>
-      <span className="mt-1 block truncate text-xs text-text-tertiary">{item.description || "暂无描述"}</span>
     </span>
   );
 }
@@ -376,8 +460,12 @@ function ItemPanel(props: {
   onCancel: () => void;
   onChange: (form: ItemFormState) => void;
   onDelete: () => void;
+  onDeleteImage: (imageId: number) => Promise<{ message?: string; ok: boolean }>;
   onEdit: () => void;
+  onMoveImage: (imageId: number, direction: "down" | "up") => Promise<{ message?: string; ok: boolean }>;
+  onSetPrimaryImage: (imageId: number) => Promise<{ message?: string; ok: boolean }>;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
+  onUploadImage: (file: File) => Promise<{ message?: string; ok: boolean }>;
   success: string;
 }) {
   if (props.mode === "view" && props.item) {
@@ -448,7 +536,6 @@ function ItemFormFields({
         <Input label="采购日期" name="purchaseDate" onChange={(event) => onChange({ ...form, purchaseDate: event.target.value })} type="date" value={form.purchaseDate} />
       </div>
       <Input label="采购价格" min={0} name="purchasePrice" onChange={(event) => onChange({ ...form, purchasePrice: event.target.value })} placeholder="例如：18.9" step="0.01" type="number" value={form.purchasePrice} />
-      <Input label="图片 URL" leadingIcon={<ImageIcon aria-hidden size={16} />} name="imageUrl" onChange={(event) => onChange({ ...form, imageUrl: event.target.value })} placeholder="https://..." value={form.imageUrl} />
       <TextareaField label="备注" name="notes" onChange={(value) => onChange({ ...form, notes: value })} placeholder="例如：先用这批" value={form.notes} />
     </>
   );
@@ -459,11 +546,25 @@ function ItemDetailPanel({
   isSubmitting,
   item,
   onDelete,
+  onDeleteImage,
   onEdit,
+  onMoveImage,
+  onSetPrimaryImage,
+  onUploadImage,
   success
 }: Parameters<typeof ItemPanel>[0] & { item: ItemView }) {
+  const primaryImage = item.images.find((img) => img.isPrimary) ?? item.images[0];
+  const imageSrc = primaryImage?.url || item.imageUrl;
+
   return (
     <Card className="xl:sticky xl:top-6">
+      {imageSrc ? (
+        <img
+          alt={item.name}
+          className="mb-4 max-h-64 w-full rounded-card object-contain"
+          src={imageSrc}
+        />
+      ) : null}
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <h2 className="truncate text-xl font-semibold text-text-primary">{item.name}</h2>
@@ -472,6 +573,15 @@ function ItemDetailPanel({
         <StatusTag status={item.status} />
       </div>
       <ItemDetailGrid item={item} />
+      <ItemImageManager
+        images={item.images}
+        isBusy={isSubmitting}
+        itemName={item.name}
+        onDelete={onDeleteImage}
+        onMove={onMoveImage}
+        onSetPrimary={onSetPrimaryImage}
+        onUpload={onUploadImage}
+      />
       <RecordList records={item.records ?? []} />
       <Feedback error={error} success={success} />
       <div className="mt-5 flex flex-col gap-2 sm:flex-row">
@@ -645,10 +755,99 @@ async function saveItem(form: ItemFormState, mode: PanelMode, selectedItemId: nu
   });
 }
 
+function validateImageBeforeUpload(file: File) {
+  if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+    return { message: "只支持 JPG、PNG、WebP 格式的图片。", ok: false as const };
+  }
+  if (file.size <= 0 || file.size > MAX_IMAGE_SIZE) {
+    return { message: "图片大小不能超过 10MB。", ok: false as const };
+  }
+
+  return { ok: true as const };
+}
+
+async function uploadItemImage(itemId: number, file: File) {
+  const formData = new FormData();
+  formData.set("file", file);
+  let response: Response;
+  try {
+    response = await fetch(`/api/items/${itemId}/images`, {
+      body: formData,
+      method: "POST"
+    });
+  } catch {
+    return { message: "网络异常，图片保存失败，请稍后重试。", ok: false as const };
+  }
+  const payload = (await response.json().catch(() => null)) as { message?: string } | null;
+  if (!response.ok) {
+    return { message: payload?.message ?? "图片保存失败，请稍后重试。", ok: false as const };
+  }
+
+  return requestItem(`/api/items/${itemId}`);
+}
+
+async function deleteItemImage(itemId: number, imageId: number) {
+  let response: Response;
+  try {
+    response = await fetch(`/api/items/${itemId}/images/${imageId}`, { method: "DELETE" });
+  } catch {
+    return { message: "网络异常，图片删除失败，请稍后重试。", ok: false as const };
+  }
+  const payload = (await response.json().catch(() => null)) as { message?: string } | null;
+  if (!response.ok) {
+    return { message: payload?.message ?? "图片删除失败，请稍后重试。", ok: false as const };
+  }
+
+  return requestItem(`/api/items/${itemId}`);
+}
+
+async function setPrimaryItemImage(itemId: number, imageId: number) {
+  let response: Response;
+  try {
+    response = await fetch(`/api/items/${itemId}/images/${imageId}`, {
+      body: JSON.stringify({ action: "setPrimary" }),
+      headers: { "Content-Type": "application/json" },
+      method: "PUT"
+    });
+  } catch {
+    return { message: "网络异常，主图设置失败，请稍后重试。", ok: false as const };
+  }
+  const payload = (await response.json().catch(() => null)) as { message?: string } | null;
+  if (!response.ok) {
+    return { message: payload?.message ?? "主图设置失败，请稍后重试。", ok: false as const };
+  }
+
+  return requestItem(`/api/items/${itemId}`);
+}
+
+async function moveItemImage(itemId: number, imageId: number, direction: "down" | "up") {
+  let response: Response;
+  try {
+    response = await fetch(`/api/items/${itemId}/images/${imageId}`, {
+      body: JSON.stringify({ action: "move", direction }),
+      headers: { "Content-Type": "application/json" },
+      method: "PUT"
+    });
+  } catch {
+    return { message: "网络异常，图片排序失败，请稍后重试。", ok: false as const };
+  }
+  const payload = (await response.json().catch(() => null)) as { message?: string } | null;
+  if (!response.ok) {
+    return { message: payload?.message ?? "图片排序失败，请稍后重试。", ok: false as const };
+  }
+
+  return requestItem(`/api/items/${itemId}`);
+}
+
 async function requestItemList(filters: ItemListFilterState) {
   const params = buildItemListSearchParams(filters);
   const path = params.size > 0 ? `/api/items?${params.toString()}` : "/api/items";
-  const response = await fetch(path, { headers: { "Content-Type": "application/json" } });
+  let response: Response;
+  try {
+    response = await fetch(path, { headers: { "Content-Type": "application/json" } });
+  } catch {
+    return { message: "网络异常，物品列表加载失败，请稍后重试。", ok: false as const };
+  }
   const payload = (await response.json().catch(() => null)) as ItemListApiResponse;
 
   if (!response.ok || !payload || payload.code !== 0 || !payload.data) {
@@ -659,7 +858,12 @@ async function requestItemList(filters: ItemListFilterState) {
 }
 
 async function requestItem(path: string, init: RequestInit = {}) {
-  const response = await fetch(path, { ...init, headers: { "Content-Type": "application/json" } });
+  let response: Response;
+  try {
+    response = await fetch(path, { ...init, headers: { "Content-Type": "application/json" } });
+  } catch {
+    return { message: "网络异常，操作失败，请稍后重试。", ok: false as const };
+  }
   const payload = (await response.json().catch(() => null)) as ItemApiResponse;
 
   if (!response.ok || !payload || payload.code !== 0 || !payload.data?.item) {
@@ -735,6 +939,27 @@ function handleDeleteResponse(
     mode: nextSelected ? "view" : "create",
     selectedItemId: nextSelected?.id ?? null,
     success: "物品已删除。"
+  };
+}
+
+function handleImageMutationResponse(
+  current: ItemManagerState,
+  fallback: ItemView,
+  response: Awaited<ReturnType<typeof requestItem>>,
+  success: string
+): ItemManagerState {
+  if (!response.ok) {
+    return { ...current, error: response.message, isSubmitting: false };
+  }
+
+  return {
+    ...current,
+    form: parseItemFormFromView(response.item),
+    isSubmitting: false,
+    items: upsertItem(current.items, response.item),
+    mode: "view",
+    selectedItemId: fallback.id,
+    success
   };
 }
 

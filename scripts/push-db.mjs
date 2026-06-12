@@ -20,6 +20,13 @@ const appSettingsMigrationPath = path.join(
   "20260602021500_add_app_settings",
   "migration.sql"
 );
+const itemImagesMigrationPath = path.join(
+  projectRoot,
+  "prisma",
+  "migrations",
+  "20260611000100_add_item_images",
+  "migration.sql"
+);
 
 function run(command, args) {
   return spawnSync(command, args, {
@@ -71,6 +78,12 @@ function applyPendingSqliteMigrations() {
   if (!tables.includes("AppSetting")) {
     runSqliteMigration(appSettingsMigrationPath);
     console.log("SQLite AppSetting migration applied.");
+  }
+
+  const refreshedTables = getTableList();
+  if (!refreshedTables.includes("ItemImage")) {
+    runSqliteMigration(itemImagesMigrationPath);
+    console.log("SQLite ItemImage migration applied.");
     return;
   }
 

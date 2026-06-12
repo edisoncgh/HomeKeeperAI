@@ -58,8 +58,9 @@ export function buildAiConfirmedItemPayload(confirmation: AiCandidateConfirmatio
 
 export async function confirmAiCandidateItem(
   confirmation: AiCandidateConfirmation,
-  fetcher: typeof fetch = fetch
-): Promise<{ item: unknown; ok: true } | { message: string; ok: false }> {
+  fetcher: typeof fetch = fetch,
+  options: { imageFile?: File } = {}
+): Promise<{ item: unknown; ok: true; warning?: string } | { message: string; ok: false }> {
   const response = await fetcher("/api/items", {
     body: JSON.stringify(buildAiConfirmedItemPayload(confirmation)),
     headers: { "Content-Type": "application/json" },
@@ -71,7 +72,53 @@ export async function confirmAiCandidateItem(
     return { message: payload?.message ?? "AI 候选入库失败，请检查字段后重试。", ok: false };
   }
 
-  return { item: payload?.data?.item ?? null, ok: true };
+  let item = payload?.data?.item ?? null;
+  const itemId = getItemId(item);
+  if (!options.imageFile || !itemId) {
+    return { item, ok: true };
+  }
+
+  const uploadResult = await uploadSourceImage(itemId, options.imageFile, fetcher);
+  if (!uploadResult.ok) {
+    return { item, ok: true, warning: "候选已写入物品，但图片保存失败；可在物品详情中重新上传。" };
+  }
+
+  try {
+    const refreshed = await fetcher(`/api/items/${itemId}`);
+    const refreshedPayload = (await refreshed.json().catch(() => null)) as { data?: { item?: unknown } } | null;
+    if (refreshed.ok && refreshedPayload?.data?.item) {
+      item = refreshedPayload.data.item;
+    } else {
+      return { item, ok: true, warning: "候选已写入物品，图片已保存；详情刷新失败，请稍后重新打开物品。" };
+    }
+  } catch {
+    return { item, ok: true, warning: "候选已写入物品，图片已保存；详情刷新失败，请稍后重新打开物品。" };
+  }
+
+  return { item, ok: true, warning: "候选已写入物品，图片已保存。" };
+}
+
+async function uploadSourceImage(itemId: number, imageFile: File, fetcher: typeof fetch) {
+  const formData = new FormData();
+  formData.set("file", imageFile);
+  try {
+    const response = await fetcher(`/api/items/${itemId}/images`, {
+      body: formData,
+      method: "POST"
+    });
+    return { ok: response.ok };
+  } catch {
+    return { ok: false };
+  }
+}
+
+function getItemId(item: unknown) {
+  if (!item || typeof item !== "object" || !("id" in item)) {
+    return null;
+  }
+
+  const id = Number((item as { id: unknown }).id);
+  return Number.isInteger(id) && id > 0 ? id : null;
 }
 
 function buildSingleConfirmation(

@@ -38,6 +38,7 @@ model Item {
   tags          Tag[]        @relation("ItemTags")
   records       ItemRecord[]
   alerts        Alert[]
+  images        ItemImage[]
 }
 
 model Category {
@@ -85,6 +86,21 @@ model Alert {
   status    AlertStatus @default(PENDING)
   createdAt DateTime    @default(now())
   item      Item        @relation(fields: [itemId], references: [id], onDelete: Cascade)
+}
+
+model ItemImage {
+  id           Int      @id @default(autoincrement())
+  itemId       Int
+  filename     String
+  originalName String?
+  mimeType     String
+  size         Int
+  url          String
+  thumbnailUrl String?
+  isPrimary    Boolean  @default(false)
+  sortOrder    Int      @default(0)
+  createdAt    DateTime @default(now())
+  item         Item     @relation(fields: [itemId], references: [id], onDelete: Cascade)
 }
 
 model AppSetting {

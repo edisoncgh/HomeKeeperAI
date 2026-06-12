@@ -4,7 +4,8 @@ import path from "node:path";
 
 const migrationFiles = [
   "prisma/migrations/20260530023000_init/migration.sql",
-  "prisma/migrations/20260602021500_add_app_settings/migration.sql"
+  "prisma/migrations/20260602021500_add_app_settings/migration.sql",
+  "prisma/migrations/20260611000100_add_item_images/migration.sql"
 ];
 let prisma;
 
@@ -56,6 +57,11 @@ async function main() {
   if (!(await tableExists("AppSetting"))) {
     await applyMigration(migrationFiles[1]);
     console.log("SQLite AppSetting schema initialized.");
+  }
+
+  if (!(await tableExists("ItemImage"))) {
+    await applyMigration(migrationFiles[2]);
+    console.log("SQLite ItemImage schema initialized.");
     return;
   }
 

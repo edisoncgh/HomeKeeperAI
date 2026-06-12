@@ -19,6 +19,7 @@ interface AiCandidateConfirmationPanelProps {
   confirmation: AiCandidateConfirmation;
   locations: AiTaxonomyOption[];
   onConfirmed?: (item: unknown) => void;
+  sourceImageFile?: File;
 }
 
 type EditableField = keyof ItemFormState;
@@ -34,7 +35,8 @@ export function AiCandidateConfirmationPanel({
   categories,
   confirmation,
   locations,
-  onConfirmed
+  onConfirmed,
+  sourceImageFile
 }: AiCandidateConfirmationPanelProps) {
   const [state, setState] = useState(confirmation);
   const [feedback, setFeedback] = useState("");
@@ -48,10 +50,10 @@ export function AiCandidateConfirmationPanel({
     event.preventDefault();
     setIsSaving(true);
     setFeedback("");
-    const result = await confirmAiCandidateItem(state);
+    const result = await confirmAiCandidateItem(state, fetch, { imageFile: sourceImageFile });
     setIsSaving(false);
     if (result.ok) {
-      setFeedback("候选已写入物品。");
+      setFeedback(result.warning ?? "候选已写入物品。");
       onConfirmed?.(result.item);
     } else {
       setFeedback(result.message);
