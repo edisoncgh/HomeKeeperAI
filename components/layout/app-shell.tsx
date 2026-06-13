@@ -66,7 +66,7 @@ function AppShellContent({ children }: AppShellProps) {
   }
 
   return (
-    <div className="min-h-screen bg-app-background text-text-primary">
+    <div className="min-h-[100dvh] overflow-x-hidden bg-app-background text-text-primary">
       <MobileHeader />
       <DesktopSidebar
         activeItem={activeItem}
@@ -196,7 +196,7 @@ function ShellMain({
   return (
     <main
       className={cn(
-        "min-h-[calc(100vh-56px)] px-4 pb-24 pt-5 sm:px-6 md:min-h-screen md:pb-8 md:pt-6 lg:px-8",
+        "min-h-[calc(100dvh-56px)] px-4 pb-[calc(6rem+env(safe-area-inset-bottom))] pt-5 sm:px-6 md:min-h-screen md:pb-8 md:pt-6 lg:px-8",
         isSidebarCollapsed ? "md:pl-[96px]" : "md:pl-[280px]"
       )}
     >
@@ -209,7 +209,7 @@ function MobileBottomNavigation({ activeItem }: { activeItem: NavigationItem }) 
   return (
     <nav
       aria-label="底部导航"
-      className="fixed inset-x-0 bottom-0 z-30 grid h-16 auto-cols-fr grid-flow-col border-t border-soft-border bg-surface/95 px-2 pb-[env(safe-area-inset-bottom)] shadow-[0_-8px_24px_rgba(51,51,51,0.08)] backdrop-blur md:hidden"
+      className="fixed inset-x-0 bottom-0 z-30 grid h-[calc(4rem+env(safe-area-inset-bottom))] grid-cols-5 items-start border-t border-soft-border bg-surface/95 px-2 pb-[env(safe-area-inset-bottom)] pt-1 shadow-[0_-8px_24px_rgba(51,51,51,0.08)] backdrop-blur md:hidden"
     >
       {mobileNavigationItems.map((item) => (
         <NavigationLink isActive={activeItem.id === item.id} item={item} key={item.id} placement="bottom" />
@@ -244,12 +244,12 @@ function NavigationLink({
     "inline-flex min-h-11 items-center rounded-card font-medium transition",
     "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary",
     isPhotoAction
-      ? "relative -mt-6 flex-col justify-center gap-1 rounded-full bg-primary px-4 text-xs text-white shadow-lg"
+      ? "relative -mt-2 mx-auto h-14 w-[4.25rem] flex-col justify-center gap-1 justify-self-center rounded-[18px] bg-primary px-3 text-xs text-white shadow-[0_8px_18px_rgba(79,191,143,0.25)]"
       : isBottom
-        ? "flex-col justify-center gap-1 px-2 text-xs"
+        ? "mx-auto w-full max-w-[4.25rem] flex-col justify-center gap-1 justify-self-center px-2 text-xs"
         : "gap-3 px-3 text-sm",
     isActive && !isPhotoAction ? "bg-primary text-white shadow-sm" : "",
-    isActive && isPhotoAction ? "ring-4 ring-primary-light" : "",
+    isActive && isPhotoAction ? "ring-2 ring-primary-light" : "",
     !isActive && !isPhotoAction ? "text-text-secondary hover:bg-primary-light hover:text-text-primary" : "",
     isCollapsed && !isBottom ? "justify-center px-0" : ""
   );
