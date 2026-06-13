@@ -1,4 +1,5 @@
 import { apiError } from "@/lib/api/response";
+import { findItemDetail, type ItemDetailView } from "@/lib/api/items";
 import { getCurrentUser } from "@/lib/auth/current-user";
 import { prisma } from "@/lib/prisma";
 import {
@@ -25,10 +26,14 @@ export interface ImageUploadResult {
   sortOrder: number;
 }
 
+export interface ImageMutationResult {
+  item: ItemDetailView;
+}
+
 export async function uploadItemImage(
   itemId: number,
   file: File
-): Promise<ImageUploadResult> {
+): Promise<ImageMutationResult> {
   const user = await getCurrentUser();
   if (!user) {
     throw new ApiError("请先登录。", 401);
@@ -58,7 +63,7 @@ export async function uploadItemImage(
   }
 
   try {
-    const image = await prisma.$transaction(async (tx) => {
+    await prisma.$transaction(async (tx) => {
       const imageCount = await tx.itemImage.count({ where: { itemId } });
       const isFirst = imageCount === 0;
       const maxSort = await tx.itemImage.aggregate({
@@ -67,7 +72,7 @@ export async function uploadItemImage(
       });
       const nextSortOrder = (maxSort._max.sortOrder ?? -1) + 1;
 
-      const created = await tx.itemImage.create({
+      await tx.itemImage.create({
         data: {
           itemId,
           filename: stored.filename,
@@ -87,30 +92,19 @@ export async function uploadItemImage(
           data: { imageUrl: stored.url }
         });
       }
-
-      return created;
     });
-
-    return {
-      id: image.id,
-      filename: image.filename,
-      mimeType: image.mimeType,
-      size: image.size,
-      url: image.url,
-      thumbnailUrl: stored.thumbnailUrl,
-      isPrimary: image.isPrimary,
-      sortOrder: image.sortOrder
-    };
   } catch (error) {
     await cleanupStoredImageFiles(itemId, stored.filename);
     throw error;
   }
+
+  return readMutatedItem(itemId);
 }
 
 export async function deleteItemImage(
   itemId: number,
   imageId: number
-): Promise<void> {
+): Promise<ImageMutationResult> {
   const user = await getCurrentUser();
   if (!user) {
     throw new ApiError("请先登录。", 401);
@@ -150,9 +144,10 @@ export async function deleteItemImage(
   });
 
   await cleanupStoredImageFiles(itemId, image.filename);
+  return readMutatedItem(itemId);
 }
 
-export async function setPrimaryItemImage(itemId: number, imageId: number): Promise<void> {
+export async function setPrimaryItemImage(itemId: number, imageId: number): Promise<ImageMutationResult> {
   const user = await getCurrentUser();
   if (!user) {
     throw new ApiError("请先登录。", 401);
@@ -179,13 +174,14 @@ export async function setPrimaryItemImage(itemId: number, imageId: number): Prom
       where: { id: itemId }
     });
   });
+  return readMutatedItem(itemId);
 }
 
 export async function moveItemImage(
   itemId: number,
   imageId: number,
   direction: string
-): Promise<void> {
+): Promise<ImageMutationResult> {
   const user = await getCurrentUser();
   if (!user) {
     throw new ApiError("请先登录。", 401);
@@ -207,7 +203,7 @@ export async function moveItemImage(
   const targetIndex = direction === "up" ? currentIndex - 1 : currentIndex + 1;
   const targetImage = images[targetIndex];
   if (!targetImage) {
-    return;
+    return readMutatedItem(itemId);
   }
 
   const currentImage = images[currentIndex];
@@ -221,6 +217,7 @@ export async function moveItemImage(
       where: { id: targetImage.id }
     });
   });
+  return readMutatedItem(itemId);
 }
 
 export async function getItemImages(itemId: number): Promise<ImageUploadResult[]> {
@@ -288,6 +285,15 @@ async function cleanupStoredImageFiles(itemId: number, filename: string) {
   } catch (error) {
     console.warn("清理图片文件失败:", error instanceof Error ? error.message : error);
   }
+}
+
+async function readMutatedItem(itemId: number) {
+  const item = await findItemDetail(itemId);
+  if (!item) {
+    throw new ApiError("物品不存在。", 404);
+  }
+
+  return { item };
 }
 
 function toImageStorageApiError(error: unknown) {

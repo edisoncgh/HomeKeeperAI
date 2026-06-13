@@ -8,13 +8,16 @@
 
 面向家庭局域网和 NAS 私有部署的 AI 仓储管理 Web 应用。记录家庭物品、分类、位置、保质期、库存状态，通过 OpenAI 兼容 LLM 服务辅助拍照识别物品、订单截图解析和首页整理建议。
 
+当前版本已经完成 M7 移动端 UI polish，适合开始在家庭 NAS 上进行 Docker 试部署和日常试用。
+
 ## 主要功能
 
 - **私有部署**：面向家庭 NAS + Docker Compose，默认仅局域网访问，数据不出家门。
 - **本地认证**：首次管理员初始化、用户名密码登录、HttpOnly Cookie 会话。
 - **分类和位置管理**：支持自定义分类、存放位置、图标和说明。
-- **物品管理**：支持物品创建、查看、编辑、删除、搜索、筛选、排序和分页。
-- **物品图片**：支持在物品详情中本地上传或手机拍照，生成缩略图并通过登录保护的本地文件服务展示；AI 拍照识别确认入库后会把源图保存到对应物品。
+- **物品管理**：支持物品创建、查看、编辑、删除、搜索、筛选、排序和分页；手机端物品详情使用底部面板，筛选默认紧凑展示。
+- **物品图片**：支持在物品详情中本地上传或手机拍照，生成缩略图并通过登录保护的本地文件服务展示；支持主图切换、排序和删除确认。
+- **移动端拍照入库**：手机底部导航聚焦总览、物品、拍照、预警、设置，中间拍照按钮会直接唤起相机或文件选择，拍摄后进入 AI 识别预览。
 - **入库记录**：创建物品时自动记录入库时间，详情页展示最近记录。
 - **AI 拍照识别**：手机拍照或上传图片，AI 自动识别物品并生成录入候选。
 - **AI 订单解析**：粘贴订单截图，AI 批量提取商品信息并生成候选。
@@ -23,7 +26,7 @@
 - **预警中心**：自动生成临期、过期、低库存预警，支持标记已处理。
 - **基础统计**：库存总览、状态统计、分类分布、位置分布。
 - **系统设置**：配置 LLM Base URL、模型和 API Key，API Key 加密存储且不回显明文。
-- **数据备份与恢复**：SQLite 数据库与物品图片快照手动备份、列表、恢复前保护性备份、恢复和删除。
+- **数据与维护**：SQLite 数据库与物品图片快照手动备份、恢复前保护性备份、恢复、删除，并提供管理员可用的孤儿图片扫描和确认清理。
 
 ## 技术栈
 
@@ -36,7 +39,7 @@
 - Docker + Docker Compose
 - OpenAI 兼容 LLM API
 
-## 快速部署
+## NAS Docker 部署
 
 ### 1. 准备环境
 
@@ -44,6 +47,8 @@
 - Docker Compose 2.0+
 - 支持 Docker 的 NAS 或本机 Docker 环境
 - 建议至少 2GB 可用内存和 10GB 可用存储空间
+
+部署前建议先确认 NAS 上的容器应用能访问项目目录，并且数据目录所在磁盘有持续可用空间。图片、SQLite 数据库和备份都会保存在 Docker Volume 中。
 
 ### 2. 配置环境变量
 
@@ -77,6 +82,16 @@ AUTH_COOKIE_SECURE="false"
 AUTH_COOKIE_SECURE="true"
 ```
 
+可选配置 LLM 默认值：
+
+```bash
+LLM_BASE_URL="https://api.openai.com/v1"
+LLM_MODEL="your-model-name"
+LLM_API_KEY="your-api-key"
+```
+
+这些只是初始默认值。登录后也可以在 `/settings` 中配置 LLM，数据库设置会优先于环境变量。
+
 ### 3. 启动
 
 ```bash
@@ -85,9 +100,27 @@ docker compose up -d --build
 
 默认访问地址：`http://localhost:3000`
 
+在 NAS 上访问时，把 `localhost` 换成 NAS 的局域网 IP 或域名，例如：
+
+```text
+http://192.168.1.10:3000
+```
+
 首次启动且数据库无用户时，访问 `/setup` 创建管理员；已有用户后访问 `/login` 登录。
 
-### 4. Docker Hub 不可达时
+### 4. 基础验证
+
+启动后建议按这个顺序检查：
+
+1. 打开 `/setup` 创建第一个管理员。
+2. 登录后进入 `/settings`，配置并测试 LLM。
+3. 创建至少一个分类和位置。
+4. 在 `/items` 新建物品，并用手机试一次底部“拍照”入口。
+5. 在物品详情上传或拍摄一张图片，确认图片可以显示。
+6. 在 `/settings` 创建一次备份，确认备份列表出现新记录。
+7. 如使用纯 HTTP 局域网访问，确认 `.env` 中 `AUTH_COOKIE_SECURE="false"`，否则登录 Cookie 可能不会回传。
+
+### 5. Docker Hub 不可达时
 
 Dockerfile 默认使用官方 `node:22.22.0-slim`。如果当前网络无法拉取 Docker Hub 镜像，可以在 `.env` 中设置可达的 Node 镜像源：
 
@@ -101,6 +134,22 @@ NODE_IMAGE="docker.m.daocloud.io/library/node:22.22.0-slim"
 docker compose up -d --build
 ```
 
+### 6. 升级或重建
+
+更新代码后重新构建即可：
+
+```bash
+docker compose up -d --build
+```
+
+默认命名 Volume 会保留数据库、上传图片和备份文件。不要在保留数据的情况下执行：
+
+```bash
+docker compose down -v
+```
+
+`down -v` 会删除 Compose Volume，相当于删除数据库、图片和备份。
+
 ## Docker 数据目录
 
 Compose 默认挂载三个命名 Volume：
@@ -112,6 +161,17 @@ Compose 默认挂载三个命名 Volume：
 容器内数据库路径固定为 `DATABASE_URL=file:/app/data/home-storage.db`。
 
 删除或重建容器不会删除数据库和备份；如果执行 `docker compose down -v`，会删除所有 Volume，请谨慎使用。
+
+如果你更希望把数据放到 NAS 的指定共享目录，可以把 `docker-compose.yml` 中的命名 Volume 改成 bind mount，例如：
+
+```yaml
+volumes:
+  - /volume1/docker/homekeeper/data:/app/data
+  - /volume1/docker/homekeeper/uploads:/app/uploads
+  - /volume1/docker/homekeeper/backups:/app/backups
+```
+
+使用 bind mount 时，需要确保容器内的 `node` 用户对这些目录有读写权限。
 
 ## 环境变量
 
@@ -128,6 +188,8 @@ Compose 默认挂载三个命名 Volume：
 | `LLM_BASE_URL` | OpenAI 兼容服务地址 | `https://api.openai.com/v1` |
 | `LLM_MODEL` | LLM 模型名 | 空 |
 | `LLM_API_KEY` | LLM API Key，数据库设置可覆盖环境默认值 | 空 |
+
+Compose 中容器内端口固定为 `3000`，`PORT` 控制的是宿主机暴露端口。比如 `PORT="3300"` 时，访问地址是 `http://NAS_IP:3300`。
 
 ## 本地开发
 
@@ -166,6 +228,18 @@ npm run dev
 
 API Key 会加密存储，不会在页面或 API 中回显明文。
 
+连接测试只验证文本 chat completions。拍照识别和订单截图解析还要求模型支持图片输入；如果文本测试成功但识别失败，请先确认模型是否支持 vision。
+
+### 手机拍照入库
+
+1. 手机浏览器打开应用并登录。
+2. 点击底部导航中间的“拍照”。
+3. 浏览器会尝试打开相机或文件选择器。
+4. 选择图片后，物品页会显示本地预览。
+5. 点击“识别候选”，确认 AI 候选后再正式入库。
+
+AI 拍照识别不会绕过用户确认。确认入库后，源图会保存到新建物品的图片栏。
+
 ### 备份和恢复
 
 进入 `/settings` 的数据备份区域：
@@ -184,9 +258,20 @@ home-storage-protect-YYYYMMDD-HHmmss.db
 
 带图片快照的新备份会在备份目录中同时生成 `home-storage-YYYYMMDD-HHmmss.db.uploads/` 伴随目录；旧 `.db` 备份没有伴随目录时仍可恢复数据库，当前图片目录会保持不变。
 
+### 孤儿图片清理
+
+进入 `/settings` 的系统维护区域：
+
+- 先点击“扫描孤儿图片”。
+- 系统会列出 `uploads/items/{itemId}/` 中未被数据库 `ItemImage` 记录引用的普通文件。
+- 点击“确认清理”前会再次扫描，降低误删风险。
+- 该维护接口要求管理员权限，普通成员不能扫描或清理。
+
+不要手动删除 `uploads` 目录中的文件，除非你已经确认数据库引用和备份状态。
+
 ## 范围和限制
 
-**已实现**：核心仓储管理、物品本地图片上传/拍照/缩略图展示、AI 辅助录入和建议、应用内预警、基础统计、Docker/Compose 部署、数据库与图片快照备份恢复。
+**已实现**：核心仓储管理、移动端拍照主入口、物品本地图片上传/拍照/缩略图展示、AI 辅助录入和建议、应用内预警、基础统计、Docker/Compose 部署、数据库与图片快照备份恢复、孤儿图片扫描和确认清理。
 
 **未实现**：图片裁剪/批量导入、自动定时备份/保留策略、标签管理、批量操作、购物清单、出库/库存调整流程、趋势统计/导出/高级图表、第三方推送、多家庭权限/密码重置/完整用户管理、PWA 和离线访问。
 

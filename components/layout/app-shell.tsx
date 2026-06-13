@@ -1,15 +1,15 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import {
   BarChart3,
   Bell,
+  Camera,
   FolderTree,
   Home,
-  LayoutGrid,
   MapPin,
   Menu,
   Package,
@@ -18,8 +18,11 @@ import {
   Settings
 } from "lucide-react";
 import { cn } from "@/lib/class-names";
+import { CameraIntakeProvider, CameraShortcutButton } from "@/components/ai";
 import {
+  getActiveMobileNavigationItem,
   getActiveNavigationItem,
+  mobileNavigationItems,
   navigationItems,
   type NavigationIconKey,
   type NavigationItem
@@ -30,21 +33,31 @@ interface AppShellProps {
 }
 
 type NavigationPlacement = "bottom" | "sidebar";
+const PHOTO_NAV_ITEM_ID = "photo";
 
 const iconMap: Record<NavigationIconKey, typeof Home> = {
   "bar-chart-3": BarChart3,
   bell: Bell,
+  camera: Camera,
   "folder-tree": FolderTree,
   home: Home,
-  "layout-grid": LayoutGrid,
   "map-pin": MapPin,
   package: Package,
   settings: Settings
 };
 
 export function AppShell({ children }: AppShellProps) {
+  return (
+    <CameraIntakeProvider>
+      <AppShellContent>{children}</AppShellContent>
+    </CameraIntakeProvider>
+  );
+}
+
+function AppShellContent({ children }: AppShellProps) {
   const pathname = usePathname();
   const activeItem = getActiveNavigationItem(pathname);
+  const fallbackMobileItem = getActiveMobileNavigationItem(pathname);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const isAuthPage = pathname === "/login" || pathname === "/setup";
 
@@ -61,7 +74,9 @@ export function AppShell({ children }: AppShellProps) {
         setIsCollapsed={setIsSidebarCollapsed}
       />
       <ShellMain isSidebarCollapsed={isSidebarCollapsed}>{children}</ShellMain>
-      <MobileBottomNavigation activeItem={activeItem} />
+      <Suspense fallback={<MobileBottomNavigation activeItem={fallbackMobileItem} />}>
+        <MobileBottomNavigationWithSearchParams pathname={pathname} />
+      </Suspense>
     </div>
   );
 }
@@ -196,11 +211,19 @@ function MobileBottomNavigation({ activeItem }: { activeItem: NavigationItem }) 
       aria-label="底部导航"
       className="fixed inset-x-0 bottom-0 z-30 grid h-16 auto-cols-fr grid-flow-col border-t border-soft-border bg-surface/95 px-2 pb-[env(safe-area-inset-bottom)] shadow-[0_-8px_24px_rgba(51,51,51,0.08)] backdrop-blur md:hidden"
     >
-      {navigationItems.map((item) => (
+      {mobileNavigationItems.map((item) => (
         <NavigationLink isActive={activeItem.id === item.id} item={item} key={item.id} placement="bottom" />
       ))}
     </nav>
   );
+}
+
+function MobileBottomNavigationWithSearchParams({ pathname }: { pathname: null | string }) {
+  const searchParams = useSearchParams();
+  const pathWithQuery = searchParams?.toString() ? `${pathname}?${searchParams.toString()}` : pathname;
+  const activeMobileItem = getActiveMobileNavigationItem(pathWithQuery);
+
+  return <MobileBottomNavigation activeItem={activeMobileItem} />;
 }
 
 function NavigationLink({
@@ -216,19 +239,35 @@ function NavigationLink({
 }) {
   const Icon = iconMap[item.icon];
   const isBottom = placement === "bottom";
+  const isPhotoAction = isBottom && item.id === PHOTO_NAV_ITEM_ID;
+  const linkClassName = cn(
+    "inline-flex min-h-11 items-center rounded-card font-medium transition",
+    "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary",
+    isPhotoAction
+      ? "relative -mt-6 flex-col justify-center gap-1 rounded-full bg-primary px-4 text-xs text-white shadow-lg"
+      : isBottom
+        ? "flex-col justify-center gap-1 px-2 text-xs"
+        : "gap-3 px-3 text-sm",
+    isActive && !isPhotoAction ? "bg-primary text-white shadow-sm" : "",
+    isActive && isPhotoAction ? "ring-4 ring-primary-light" : "",
+    !isActive && !isPhotoAction ? "text-text-secondary hover:bg-primary-light hover:text-text-primary" : "",
+    isCollapsed && !isBottom ? "justify-center px-0" : ""
+  );
+
+  if (isPhotoAction) {
+    return (
+      <CameraShortcutButton className={linkClassName} iconSize={isBottom ? 19 : 18} label={item.label}>
+        <Icon aria-hidden size={isBottom ? 19 : 18} />
+        <span className="truncate">{item.label}</span>
+      </CameraShortcutButton>
+    );
+  }
 
   return (
     <Link
       aria-current={isActive ? "page" : undefined}
       aria-label={isCollapsed ? item.label : undefined}
-      className={cn(
-        "inline-flex min-h-11 items-center rounded-card font-medium transition",
-        "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary",
-        isActive ? "bg-primary text-white shadow-sm" : "text-text-secondary hover:bg-primary-light",
-        isActive ? "" : "hover:text-text-primary",
-        isBottom ? "flex-col justify-center gap-1 px-2 text-xs" : "gap-3 px-3 text-sm",
-        isCollapsed && !isBottom ? "justify-center px-0" : ""
-      )}
+      className={linkClassName}
       href={item.href}
     >
       <Icon aria-hidden size={isBottom ? 19 : 18} />

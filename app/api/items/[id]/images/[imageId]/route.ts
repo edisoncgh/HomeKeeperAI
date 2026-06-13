@@ -14,8 +14,7 @@ export async function DELETE(
       return apiError("无效的 ID。", 400);
     }
 
-    await deleteItemImage(itemId, imageIdNum);
-    return apiOk({ success: true });
+    return apiOk(await deleteItemImage(itemId, imageIdNum));
   } catch (error) {
     return handleApiError(error);
   }
@@ -38,13 +37,11 @@ export async function PUT(
       return apiError("请求体不是合法的 JSON。", 400);
     }
     if (payload?.action === "setPrimary") {
-      await setPrimaryItemImage(itemId, imageIdNum);
-      return apiOk({ success: true });
+      return apiOk(await setPrimaryItemImage(itemId, imageIdNum));
     }
 
     if (payload?.action === "move") {
-      await moveItemImage(itemId, imageIdNum, payload.direction ?? "");
-      return apiOk({ success: true });
+      return apiOk(await moveItemImage(itemId, imageIdNum, payload.direction ?? ""));
     }
 
     return apiError("无效的图片操作。", 400);

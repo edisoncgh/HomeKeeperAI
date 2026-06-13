@@ -48,6 +48,16 @@ vi.mock("@/lib/storage/local", () => ({
 
 import { deleteItemImage, getItemImages, moveItemImage, setPrimaryItemImage, uploadItemImage } from "@/lib/api/images";
 
+function buildUpdatedItem(images: unknown[] = []) {
+  return {
+    id: 1,
+    imageUrl: images.length ? "/api/uploads/items/1/test-uuid.jpg" : null,
+    images,
+    name: "测试物品",
+    records: []
+  };
+}
+
 describe("image API helpers", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -95,7 +105,22 @@ describe("image API helpers", () => {
 
     it("uploads file and creates database record", async () => {
       mocks.getCurrentUser.mockResolvedValue({ id: 1, username: "admin" });
-      mocks.prisma.item.findUnique.mockResolvedValue({ id: 1 });
+      mocks.prisma.item.findUnique
+        .mockResolvedValueOnce({ id: 1 })
+        .mockResolvedValueOnce(
+          buildUpdatedItem([
+            {
+              id: 1,
+              filename: "test-uuid.jpg",
+              mimeType: "image/jpeg",
+              size: 1024,
+              url: "/api/uploads/items/1/test-uuid.jpg",
+              thumbnailUrl: "/api/uploads/items/1/test-uuid-thumb.jpg",
+              isPrimary: true,
+              sortOrder: 0
+            }
+          ])
+        );
       mocks.prisma.itemImage.count.mockResolvedValue(0);
       mocks.storage.storeFile.mockResolvedValue({
         filename: "test-uuid.jpg",
@@ -118,15 +143,15 @@ describe("image API helpers", () => {
       const file = new File(["test"], "photo.jpg", { type: "image/jpeg" });
       const result = await uploadItemImage(1, file);
 
-      expect(result).toMatchObject({
+      expect(result.item).toMatchObject({
         id: 1,
-        filename: "test-uuid.jpg",
-        mimeType: "image/jpeg",
-        size: 1024,
-        url: "/api/uploads/items/1/test-uuid.jpg",
-        thumbnailUrl: "/api/uploads/items/1/test-uuid-thumb.jpg",
-        isPrimary: true,
-        sortOrder: 0
+        images: [
+          expect.objectContaining({
+            id: 1,
+            isPrimary: true,
+            url: "/api/uploads/items/1/test-uuid.jpg"
+          })
+        ]
       });
       expect(mocks.storage.storeFile).toHaveBeenCalledOnce();
       expect(mocks.prisma.item.update).toHaveBeenCalledWith({
@@ -137,7 +162,7 @@ describe("image API helpers", () => {
 
     it("appends images after the maximum sort order instead of the raw image count", async () => {
       mocks.getCurrentUser.mockResolvedValue({ id: 1, username: "admin" });
-      mocks.prisma.item.findUnique.mockResolvedValue({ id: 1 });
+      mocks.prisma.item.findUnique.mockResolvedValueOnce({ id: 1 }).mockResolvedValueOnce(buildUpdatedItem());
       mocks.prisma.itemImage.count.mockResolvedValue(2);
       mocks.prisma.itemImage.aggregate.mockResolvedValue({ _max: { sortOrder: 3 } });
       mocks.storage.storeFile.mockResolvedValue({
@@ -228,8 +253,9 @@ describe("image API helpers", () => {
         filename: "test.jpg",
         isPrimary: true
       }).mockResolvedValueOnce(null);
+      mocks.prisma.item.findUnique.mockResolvedValue(buildUpdatedItem());
 
-      await deleteItemImage(1, 1);
+      const result = await deleteItemImage(1, 1);
 
       expect(mocks.storage.deleteFile).toHaveBeenCalledWith("/uploads/items/1", "test.jpg");
       expect(mocks.storage.deleteFile).toHaveBeenCalledWith("/uploads/items/1", "test-thumb.jpg");
@@ -238,6 +264,7 @@ describe("image API helpers", () => {
         where: { id: 1 },
         data: { imageUrl: null }
       });
+      expect(result.item).toMatchObject({ id: 1, images: [] });
     });
 
     it("keeps stored files when database deletion fails", async () => {
@@ -300,8 +327,9 @@ describe("image API helpers", () => {
       mocks.prisma.itemImage.updateMany.mockResolvedValue({ count: 2 });
       mocks.prisma.itemImage.update.mockResolvedValue({});
       mocks.prisma.item.update.mockResolvedValue({});
+      mocks.prisma.item.findUnique.mockResolvedValue(buildUpdatedItem([{ id: 2, isPrimary: true }]));
 
-      await setPrimaryItemImage(1, 2);
+      const result = await setPrimaryItemImage(1, 2);
 
       expect(mocks.prisma.itemImage.updateMany).toHaveBeenCalledWith({
         data: { isPrimary: false },
@@ -315,6 +343,7 @@ describe("image API helpers", () => {
         data: { imageUrl: "/api/uploads/items/1/second.jpg" },
         where: { id: 1 }
       });
+      expect(result.item).toMatchObject({ id: 1, images: [expect.objectContaining({ id: 2, isPrimary: true })] });
     });
 
     it("rejects images outside the item", async () => {
@@ -340,8 +369,9 @@ describe("image API helpers", () => {
         { id: 3, itemId: 1, sortOrder: 2 }
       ]);
       mocks.prisma.itemImage.update.mockResolvedValue({});
+      mocks.prisma.item.findUnique.mockResolvedValue(buildUpdatedItem([{ id: 2, sortOrder: 2 }]));
 
-      await moveItemImage(1, 2, "down");
+      const result = await moveItemImage(1, 2, "down");
 
       expect(mocks.prisma.itemImage.update).toHaveBeenCalledWith({
         data: { sortOrder: 2 },
@@ -351,6 +381,7 @@ describe("image API helpers", () => {
         data: { sortOrder: 1 },
         where: { id: 3 }
       });
+      expect(result.item).toMatchObject({ id: 1, images: [expect.objectContaining({ id: 2, sortOrder: 2 })] });
     });
 
     it("keeps first image in place when moving up", async () => {
@@ -359,10 +390,12 @@ describe("image API helpers", () => {
         { id: 1, itemId: 1, sortOrder: 0 },
         { id: 2, itemId: 1, sortOrder: 1 }
       ]);
+      mocks.prisma.item.findUnique.mockResolvedValue(buildUpdatedItem([{ id: 1, sortOrder: 0 }]));
 
-      await moveItemImage(1, 1, "up");
+      const result = await moveItemImage(1, 1, "up");
 
       expect(mocks.prisma.itemImage.update).not.toHaveBeenCalled();
+      expect(result.item).toMatchObject({ id: 1, images: [expect.objectContaining({ id: 1, sortOrder: 0 })] });
     });
 
     it("rejects moving a missing image", async () => {

@@ -104,7 +104,7 @@ export async function getItem(id: number) {
     return unauthorized;
   }
 
-  const item = await prisma.item.findUnique({ select: itemDetailSelect, where: { id } });
+  const item = await findItemDetail(id);
   return item ? apiOk({ item }) : apiError("物品不存在。", 404);
 }
 
@@ -162,6 +162,12 @@ export async function queryItems(query: ItemQuery) {
 
   return { items, pagination: buildPagination(query, total) };
 }
+
+export async function findItemDetail(id: number) {
+  return prisma.item.findUnique({ select: itemDetailSelect, where: { id } });
+}
+
+export type ItemDetailView = NonNullable<Awaited<ReturnType<typeof findItemDetail>>>;
 
 async function createItemWithRecord(data: ItemInput, operatorId: number) {
   return prisma.$transaction(async (tx) => {

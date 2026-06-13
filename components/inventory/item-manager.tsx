@@ -71,6 +71,7 @@ interface ItemManagerProps {
   categories: TaxonomyOptionView[];
   initialFilters: ItemListFilterState;
   initialItems: ItemView[];
+  initialMode?: "camera" | "default" | "photo";
   initialPagination: PaginationView;
   locations: TaxonomyOptionView[];
 }
@@ -78,6 +79,7 @@ interface ItemManagerProps {
 type PanelMode = "create" | "edit" | "view";
 
 const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
+const CAMERA_AUTO_OPEN_TOKEN = 1;
 const MAX_IMAGE_SIZE = 10 * 1024 * 1024;
 
 interface ItemManagerState {
@@ -95,11 +97,21 @@ interface ItemManagerState {
   success: string;
 }
 
-export function ItemManager({ categories, initialFilters, initialItems, initialPagination, locations }: ItemManagerProps) {
+export function ItemManager({
+  categories,
+  initialFilters,
+  initialItems,
+  initialMode = "default",
+  initialPagination,
+  locations
+}: ItemManagerProps) {
   const [state, setState] = useState<ItemManagerState>(() => createInitialState(initialItems, initialFilters, initialPagination));
+  const [isMobilePanelOpen, setIsMobilePanelOpen] = useState(false);
   const selectedItem = useMemo(() => findSelectedItem(state.items, state.selectedItemId), [state.items, state.selectedItemId]);
+  const shouldOpenPhotoRecognition = initialMode === "camera" || initialMode === "photo";
 
   async function selectItem(item: ItemView) {
+    setIsMobilePanelOpen(true);
     setState((current) => ({ ...current, detailLoadingId: item.id, error: "", mode: "view", selectedItemId: item.id }));
     const response = await requestItem(`/api/items/${item.id}`);
     setState((current) => handleDetailResponse(current, item, response));
@@ -120,6 +132,9 @@ export function ItemManager({ categories, initialFilters, initialItems, initialP
     setState((current) => ({ ...current, error: "", isSubmitting: true, success: "" }));
     const response = await requestItem(`/api/items/${selectedItem.id}`, { method: "DELETE" });
     setState((current) => handleDeleteResponse(current, selectedItem.id, response));
+    if (response.ok) {
+      setIsMobilePanelOpen(false);
+    }
   }
 
   async function uploadSelectedItemImage(file: File) {
@@ -192,10 +207,18 @@ export function ItemManager({ categories, initialFilters, initialItems, initialP
 
   return (
     <section className="mx-auto flex max-w-7xl flex-col gap-5">
-      <ItemWorkspaceHeader itemCount={state.pagination.total} onCreate={() => setState(startCreate)} />
+      <ItemWorkspaceHeader
+        itemCount={state.pagination.total}
+        onCreate={() => {
+          setIsMobilePanelOpen(true);
+          setState(startCreate);
+        }}
+      />
       <TaxonomyNotice categories={categories} locations={locations} />
       <PhotoRecognitionPanel
+        autoOpenCameraToken={initialMode === "camera" ? CAMERA_AUTO_OPEN_TOKEN : undefined}
         categories={categories}
+        initialExpanded={shouldOpenPhotoRecognition}
         locations={locations}
         onItemCreated={(item) => setState((current) => handleSaveResponse(current, { item: item as ItemView, ok: true }))}
       />
@@ -225,26 +248,54 @@ export function ItemManager({ categories, initialFilters, initialItems, initialP
           onSelect={selectItem}
           selectedItemId={state.selectedItemId}
         />
-        <ItemPanel
-          categories={categories}
-          error={state.error}
-          form={state.form}
-          isSubmitting={state.isSubmitting}
-          item={selectedItem}
-          mode={state.mode}
-          onCancel={() => setState(cancelEdit)}
-          onChange={(form) => setState((current) => ({ ...current, form }))}
-          onDelete={deleteSelectedItem}
-          onDeleteImage={deleteSelectedItemImage}
-          onEdit={() => selectedItem && setState(startEdit(selectedItem))}
-          onMoveImage={moveSelectedItemImage}
-          onSetPrimaryImage={setSelectedItemPrimaryImage}
-          onSubmit={submitForm}
-          onUploadImage={uploadSelectedItemImage}
-          success={state.success}
-          locations={locations}
-        />
+        <div className="hidden md:block">
+          <ItemPanel
+            categories={categories}
+            error={state.error}
+            form={state.form}
+            isSubmitting={state.isSubmitting}
+            item={selectedItem}
+            mode={state.mode}
+            onCancel={() => setState(cancelEdit)}
+            onChange={(form) => setState((current) => ({ ...current, form }))}
+            onDelete={deleteSelectedItem}
+            onDeleteImage={deleteSelectedItemImage}
+            onEdit={() => selectedItem && setState(startEdit(selectedItem))}
+            onMoveImage={moveSelectedItemImage}
+            onSetPrimaryImage={setSelectedItemPrimaryImage}
+            onSubmit={submitForm}
+            onUploadImage={uploadSelectedItemImage}
+            success={state.success}
+            locations={locations}
+          />
+        </div>
       </div>
+      <MobileItemPanelSheet
+        categories={categories}
+        error={state.error}
+        form={state.form}
+        isOpen={isMobilePanelOpen}
+        isSubmitting={state.isSubmitting}
+        item={selectedItem}
+        locations={locations}
+        mode={state.mode}
+        onCancel={() => setState(cancelEdit)}
+        onChange={(form) => setState((current) => ({ ...current, form }))}
+        onClose={() => setIsMobilePanelOpen(false)}
+        onDelete={deleteSelectedItem}
+        onDeleteImage={deleteSelectedItemImage}
+        onEdit={() => {
+          if (selectedItem) {
+            setIsMobilePanelOpen(true);
+            setState(startEdit(selectedItem));
+          }
+        }}
+        onMoveImage={moveSelectedItemImage}
+        onSetPrimaryImage={setSelectedItemPrimaryImage}
+        onSubmit={submitForm}
+        onUploadImage={uploadSelectedItemImage}
+        success={state.success}
+      />
     </section>
   );
 }
@@ -369,6 +420,7 @@ function MobileItemCards({
         >
           <ItemListPrimary item={item} loading={loadingId === item.id} />
           <ItemListMeta item={item} />
+          <span className="mt-3 inline-flex text-sm font-medium text-primary">查看详情</span>
         </button>
       ))}
     </div>
@@ -473,6 +525,45 @@ function ItemPanel(props: {
   }
 
   return <ItemFormPanel {...props} />;
+}
+
+function MobileItemPanelSheet({
+  isOpen,
+  onClose,
+  ...panelProps
+}: Parameters<typeof ItemPanel>[0] & {
+  isOpen: boolean;
+  onClose: () => void;
+}) {
+  return (
+    <div
+      aria-hidden={!isOpen}
+      className={[
+        "fixed inset-0 z-40 md:hidden",
+        isOpen ? "pointer-events-auto" : "pointer-events-none hidden"
+      ].join(" ")}
+    >
+      <button
+        aria-label="关闭详情"
+        className="absolute inset-0 bg-black/35"
+        onClick={onClose}
+        type="button"
+      />
+      <section className="absolute inset-x-0 bottom-0 max-h-[88dvh] overflow-y-auto rounded-t-[16px] bg-app-background p-4 shadow-[0_-16px_36px_rgba(51,51,51,0.18)]">
+        <div className="mb-3 flex items-center justify-between gap-3">
+          <h2 className="text-base font-semibold text-text-primary">移动端物品详情</h2>
+          <button
+            className="min-h-10 rounded-card px-3 text-sm font-medium text-primary transition hover:bg-primary-light"
+            onClick={onClose}
+            type="button"
+          >
+            关闭详情
+          </button>
+        </div>
+        {isOpen ? <ItemPanel {...panelProps} /> : null}
+      </section>
+    </div>
+  );
 }
 
 function ItemFormPanel({
@@ -779,11 +870,7 @@ async function uploadItemImage(itemId: number, file: File) {
     return { message: "网络异常，图片保存失败，请稍后重试。", ok: false as const };
   }
   const payload = (await response.json().catch(() => null)) as { message?: string } | null;
-  if (!response.ok) {
-    return { message: payload?.message ?? "图片保存失败，请稍后重试。", ok: false as const };
-  }
-
-  return requestItem(`/api/items/${itemId}`);
+  return parseImageMutationResponse(response, payload, "图片保存失败，请稍后重试。");
 }
 
 async function deleteItemImage(itemId: number, imageId: number) {
@@ -794,11 +881,7 @@ async function deleteItemImage(itemId: number, imageId: number) {
     return { message: "网络异常，图片删除失败，请稍后重试。", ok: false as const };
   }
   const payload = (await response.json().catch(() => null)) as { message?: string } | null;
-  if (!response.ok) {
-    return { message: payload?.message ?? "图片删除失败，请稍后重试。", ok: false as const };
-  }
-
-  return requestItem(`/api/items/${itemId}`);
+  return parseImageMutationResponse(response, payload, "图片删除失败，请稍后重试。");
 }
 
 async function setPrimaryItemImage(itemId: number, imageId: number) {
@@ -813,11 +896,7 @@ async function setPrimaryItemImage(itemId: number, imageId: number) {
     return { message: "网络异常，主图设置失败，请稍后重试。", ok: false as const };
   }
   const payload = (await response.json().catch(() => null)) as { message?: string } | null;
-  if (!response.ok) {
-    return { message: payload?.message ?? "主图设置失败，请稍后重试。", ok: false as const };
-  }
-
-  return requestItem(`/api/items/${itemId}`);
+  return parseImageMutationResponse(response, payload, "主图设置失败，请稍后重试。");
 }
 
 async function moveItemImage(itemId: number, imageId: number, direction: "down" | "up") {
@@ -832,11 +911,15 @@ async function moveItemImage(itemId: number, imageId: number, direction: "down" 
     return { message: "网络异常，图片排序失败，请稍后重试。", ok: false as const };
   }
   const payload = (await response.json().catch(() => null)) as { message?: string } | null;
-  if (!response.ok) {
-    return { message: payload?.message ?? "图片排序失败，请稍后重试。", ok: false as const };
+  return parseImageMutationResponse(response, payload, "图片排序失败，请稍后重试。");
+}
+
+function parseImageMutationResponse(response: Response, payload: null | { data?: { item?: ItemView }; message?: string }, fallbackMessage: string) {
+  if (!response.ok || !payload?.data?.item) {
+    return { message: payload?.message ?? fallbackMessage, ok: false as const };
   }
 
-  return requestItem(`/api/items/${itemId}`);
+  return { item: payload.data.item, ok: true as const };
 }
 
 async function requestItemList(filters: ItemListFilterState) {

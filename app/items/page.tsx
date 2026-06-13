@@ -27,6 +27,8 @@ export default async function ItemsPage({ searchParams }: ItemsPageProps) {
     throw new Error(defaultQuery.message);
   }
   const listQuery = parsedQuery.ok ? parsedQuery.data : defaultQuery.data;
+  const rawMode = urlSearchParams.get("mode");
+  const mode = rawMode === "camera" || rawMode === "photo" ? rawMode : "default";
   const [itemResult, categories, locations] = await Promise.all([
     queryItems(listQuery),
     prisma.category.findMany({ orderBy: { name: "asc" }, select: taxonomySelect }),
@@ -38,6 +40,7 @@ export default async function ItemsPage({ searchParams }: ItemsPageProps) {
       categories={serializeTaxonomyOptions(categories)}
       initialFilters={parseItemListFilters(urlSearchParams)}
       initialItems={serializeItems(itemResult.items)}
+      initialMode={mode}
       initialPagination={itemResult.pagination}
       locations={serializeTaxonomyOptions(locations)}
     />

@@ -3,6 +3,10 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
 import { HomeDashboard } from "@/components/dashboard/home-dashboard";
 
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ push: vi.fn() })
+}));
+
 describe("HomeDashboard", () => {
   it("renders inventory overview, shortcuts, and a manual AI advice entry", () => {
     vi.stubGlobal("React", React);
@@ -30,5 +34,34 @@ describe("HomeDashboard", () => {
     expect(html).toContain("4 条待处理");
     expect(html).toContain("href=\"/alerts\"");
     expect(html).toContain("牛奶");
+  });
+
+  it("renders a mobile-first photo intake action and compact priority summary", () => {
+    vi.stubGlobal("React", React);
+    const html = renderToStaticMarkup(
+      createElement(HomeDashboard, {
+        overview: {
+          alertSummary: { expired: 1, expiring: 2, lowStock: 1, pending: 4, resolved: 3 },
+          categoryCount: 2,
+          itemCount: 5,
+          latestItems: [
+            { id: 7, name: "牛奶", quantity: 2 },
+            { id: 8, name: "纸巾", quantity: 4 },
+            { id: 9, name: "大米", quantity: 1 },
+            { id: 10, name: "酱油", quantity: 1 }
+          ],
+          locationCount: 3
+        },
+        user: { displayName: "Edison", role: "ADMIN", username: "edison" }
+      })
+    );
+
+    expect(html).toContain("今天先处理");
+    expect(html).toContain("name=\"cameraShortcutImage\"");
+    expect(html).toContain("capture=\"environment\"");
+    expect(html).toContain("拍照入库");
+    expect(html).toContain("查看完整统计");
+    expect(html).toContain("最近 3 件");
+    expect(html).not.toContain("酱油");
   });
 });

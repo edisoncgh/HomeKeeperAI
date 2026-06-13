@@ -1,10 +1,18 @@
-export type NavigationItemId = "alerts" | "categories" | "items" | "locations" | "overview" | "settings" | "stats" | "ui";
+export type NavigationItemId =
+  | "alerts"
+  | "categories"
+  | "items"
+  | "locations"
+  | "overview"
+  | "photo"
+  | "settings"
+  | "stats";
 export type NavigationIconKey =
   | "bar-chart-3"
   | "bell"
+  | "camera"
   | "folder-tree"
   | "home"
-  | "layout-grid"
   | "map-pin"
   | "package"
   | "settings";
@@ -15,6 +23,8 @@ export interface NavigationItem {
   readonly id: NavigationItemId;
   readonly label: string;
 }
+
+export const PHOTO_INTAKE_HREF = "/items?mode=camera";
 
 export const navigationItems: readonly NavigationItem[] = [
   {
@@ -58,12 +68,39 @@ export const navigationItems: readonly NavigationItem[] = [
     icon: "settings",
     id: "settings",
     label: "设置"
+  }
+] as const;
+
+export const mobileNavigationItems: readonly NavigationItem[] = [
+  {
+    href: "/",
+    icon: "home",
+    id: "overview",
+    label: "总览"
   },
   {
-    href: "/ui",
-    icon: "layout-grid",
-    id: "ui",
-    label: "组件"
+    href: "/items",
+    icon: "package",
+    id: "items",
+    label: "物品"
+  },
+  {
+    href: PHOTO_INTAKE_HREF,
+    icon: "camera",
+    id: "photo",
+    label: "拍照"
+  },
+  {
+    href: "/alerts",
+    icon: "bell",
+    id: "alerts",
+    label: "预警"
+  },
+  {
+    href: "/settings",
+    icon: "settings",
+    id: "settings",
+    label: "设置"
   }
 ] as const;
 
@@ -81,10 +118,51 @@ export function getActiveNavigationItem(pathname: null | string | undefined) {
   );
 }
 
+export function getActiveMobileNavigationItem(pathname: null | string | undefined) {
+  const normalizedPathname = normalizePathname(pathname);
+
+  if (normalizedPathname === PHOTO_INTAKE_HREF || normalizedPathname === "/items?mode=photo") {
+    return findMobileNavigationItem("photo");
+  }
+
+  if (normalizedPathname === "/stats" || normalizedPathname.startsWith("/stats/")) {
+    return findMobileNavigationItem("overview");
+  }
+
+  if (
+    normalizedPathname === "/categories" ||
+    normalizedPathname.startsWith("/categories/") ||
+    normalizedPathname === "/locations" ||
+    normalizedPathname.startsWith("/locations/")
+  ) {
+    return findMobileNavigationItem("settings");
+  }
+
+  return (
+    mobileNavigationItems.find((item) => {
+      const hrefPath = item.href.split("?")[0];
+      if (hrefPath === "/") {
+        return normalizedPathname === "/";
+      }
+
+      return normalizedPathname === hrefPath || normalizedPathname.startsWith(`${hrefPath}/`);
+    }) ?? findMobileNavigationItem("overview")
+  );
+}
+
 function normalizePathname(pathname: null | string | undefined) {
   if (!pathname) {
     return "/";
   }
 
   return pathname.startsWith("/") ? pathname : `/${pathname}`;
+}
+
+function findMobileNavigationItem(id: NavigationItemId) {
+  const item = mobileNavigationItems.find((navigationItem) => navigationItem.id === id);
+  if (!item) {
+    throw new Error(`Missing mobile navigation item: ${id}`);
+  }
+
+  return item;
 }
