@@ -1,7 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { mkdir, readdir, readFile, stat, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
-import sharp from "sharp";
 const UPLOAD_ROOT = process.env.UPLOAD_DIR?.trim() || path.join(process.cwd(), "uploads");
 
 export const ALLOWED_MIME_TYPES = ["image/jpeg", "image/png", "image/webp"] as const;
@@ -69,6 +68,7 @@ export async function processImage(
   buffer: Buffer,
   options: ImageProcessingOptions = {}
 ): Promise<{ processed: Buffer; thumbnail: Buffer }> {
+  const { default: sharp } = await import("sharp");
   const opts = { ...DEFAULT_OPTIONS, ...options };
   const metadata = await sharp(buffer).metadata();
   if (!metadata.width || !metadata.height) {

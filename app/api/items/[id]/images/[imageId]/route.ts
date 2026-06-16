@@ -2,6 +2,8 @@ import { NextRequest } from "next/server";
 import { apiError, apiOk } from "@/lib/api/response";
 import { deleteItemImage, handleApiError, moveItemImage, setPrimaryItemImage } from "@/lib/api/images";
 
+export const dynamic = "force-dynamic";
+
 export async function DELETE(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string; imageId: string }> }

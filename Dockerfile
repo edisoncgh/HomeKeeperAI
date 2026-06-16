@@ -12,7 +12,7 @@ RUN apt-get update \
 FROM base AS deps
 
 COPY package.json package-lock.json ./
-RUN npm ci --no-audit --no-fund
+RUN npm ci --include=optional --no-audit --no-fund
 
 FROM base AS builder
 ENV DATABASE_URL="file:/app/data/home-storage.db"
@@ -21,7 +21,7 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN mkdir -p /app/data /app/uploads /app/backups
 RUN npx prisma generate
-RUN npm run build
+RUN node node_modules/next/dist/bin/next build
 
 FROM base AS runner
 ENV NODE_ENV=production
@@ -39,6 +39,12 @@ COPY --from=builder --chown=node:node /app/prisma ./prisma
 COPY --from=builder --chown=node:node /app/docker ./docker
 COPY --from=builder --chown=node:node /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder --chown=node:node /app/node_modules/@prisma/client ./node_modules/@prisma/client
+COPY --from=builder --chown=node:node /app/node_modules/sharp ./node_modules/sharp
+COPY --from=builder --chown=node:node /app/node_modules/@img ./node_modules/@img
+COPY --from=builder --chown=node:node /app/node_modules/detect-libc ./node_modules/detect-libc
+COPY --from=builder --chown=node:node /app/node_modules/semver ./node_modules/semver
+
+RUN node -e "const sharp = require('sharp'); console.log('sharp runtime ok', sharp.versions.vips)"
 
 USER node
 

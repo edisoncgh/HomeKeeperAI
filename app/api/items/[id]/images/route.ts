@@ -2,6 +2,8 @@ import { NextRequest } from "next/server";
 import { apiError, apiOk } from "@/lib/api/response";
 import { getItemImages, handleApiError, uploadItemImage } from "@/lib/api/images";
 
+export const dynamic = "force-dynamic";
+
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
