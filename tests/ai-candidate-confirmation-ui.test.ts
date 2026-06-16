@@ -24,7 +24,9 @@ function buildBananaConfirmation(): AiCandidateConfirmation {
         },
         locationName: { confidence: 0.72, reason: "适合作为冰箱或阴凉处候选。", source: "inference", value: "冰箱" },
         name: { confidence: 0.92, source: "image", value: "香蕉" },
-        quantity: { confidence: 0.35, source: "image", value: 1 }
+        quantity: { confidence: 0.35, source: "image", value: 1 },
+        specification: { confidence: 0.7, source: "image", value: "约一串" },
+        unit: { confidence: 0.62, source: "image", value: "串" }
       }
     ],
     categories,
@@ -57,7 +59,9 @@ describe("confirmAiCandidateItem", () => {
       notes: null,
       purchaseDate: null,
       purchasePrice: null,
-      quantity: 1
+      quantity: 1,
+      specification: "约一串",
+      unit: "串"
     });
     expect(postedBody).not.toContain("fieldMeta");
     expect(postedBody).not.toContain("warnings");
@@ -90,7 +94,11 @@ describe("AiCandidateConfirmationPanel", () => {
     expect(html).toContain("图片未显示保质期，按香蕉常见保存时间估计。");
     expect(html).toContain("香蕉 的数量置信度较低，请人工确认。");
     expect(html).toContain("确认入库");
+    expect(html).toContain("数量单位");
+    expect(html).toContain("规格");
     expect(html).toContain("name=\"name\"");
+    expect(html).toContain("name=\"unit\"");
+    expect(html).toContain("name=\"specification\"");
     expect(html).toContain("name=\"categoryId\"");
     expect(html).toContain("name=\"locationId\"");
   });

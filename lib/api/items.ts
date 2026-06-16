@@ -41,7 +41,9 @@ const itemBaseSelect = {
   purchaseDate: true,
   purchasePrice: true,
   quantity: true,
+  specification: true,
   status: true,
+  unit: true,
   updatedAt: true
 };
 
@@ -200,7 +202,13 @@ function buildItemWhere(query: ItemQuery): Prisma.ItemWhereInput {
 }
 
 function buildSearchConditions(q: string): Prisma.ItemWhereInput[] {
-  return [{ name: { contains: q } }, { description: { contains: q } }, { notes: { contains: q } }];
+  return [
+    { name: { contains: q } },
+    { description: { contains: q } },
+    { notes: { contains: q } },
+    { specification: { contains: q } },
+    { unit: { contains: q } }
+  ];
 }
 
 function buildPagination(query: ItemQuery, total: number) {

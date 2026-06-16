@@ -147,6 +147,8 @@ function applyBasicFields(
   applyStringField(candidate.notes, "notes", form, fieldMeta);
   applyStringField(candidate.purchaseDate, "purchaseDate", form, fieldMeta);
   applyStringField(candidate.purchasePrice, "purchasePrice", form, fieldMeta);
+  applyStringField(candidate.specification, "specification", form, fieldMeta);
+  applyStringField(candidate.unit, "unit", form, fieldMeta);
 
   if (candidate.expiryDate) {
     applyStringField(candidate.expiryDate, "expiryDate", form, fieldMeta);

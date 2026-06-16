@@ -30,7 +30,9 @@ describe("buildAiCandidateConfirmations", () => {
       locationName: { confidence: 0.72, reason: "香蕉适合放在冰箱或阴凉处。", source: "inference", value: "冰箱" },
       name: { confidence: 0.92, source: "image", value: "香蕉" },
       purchaseDate: { confidence: 0.8, source: "user", value: "2026-06-02" },
-      quantity: { confidence: 0.62, source: "image", value: 1 }
+      quantity: { confidence: 0.62, source: "image", value: 1 },
+      specification: { confidence: 0.7, source: "image", value: "约一串" },
+      unit: { confidence: 0.62, source: "image", value: "串" }
     };
 
     const [confirmation] = buildAiCandidateConfirmations({
@@ -47,7 +49,9 @@ describe("buildAiCandidateConfirmations", () => {
       locationId: "1",
       name: "香蕉",
       purchaseDate: "2026-06-02",
-      quantity: "1"
+      quantity: "1",
+      specification: "约一串",
+      unit: "串"
     });
     expect(confirmation.fieldMeta.expiryDate).toMatchObject({
       confidence: 0.68,
@@ -111,7 +115,9 @@ describe("buildAiConfirmedItemPayload", () => {
         {
           name: { confidence: 0.92, source: "image", value: "牛奶" },
           purchasePrice: { confidence: 0.88, source: "order", value: 18.9 },
-          quantity: { confidence: 0.8, source: "order", value: 2 }
+          quantity: { confidence: 0.8, source: "order", value: 2 },
+          specification: { confidence: 0.82, source: "order", value: "500ML" },
+          unit: { confidence: 0.8, source: "order", value: "盒" }
         }
       ],
       categories,
@@ -130,7 +136,9 @@ describe("buildAiConfirmedItemPayload", () => {
       notes: null,
       purchaseDate: null,
       purchasePrice: 18.9,
-      quantity: 2
+      quantity: 2,
+      specification: "500ML",
+      unit: "盒"
     });
   });
 });

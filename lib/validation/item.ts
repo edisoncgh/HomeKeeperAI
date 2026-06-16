@@ -12,6 +12,8 @@ export interface ItemInput {
   purchaseDate: Date | null;
   purchasePrice: null | number;
   quantity: number;
+  specification: null | string;
+  unit: null | string;
 }
 
 export interface ItemQuery {
@@ -114,7 +116,9 @@ function buildItemInputFields(
       locationId: refs.data.locationId,
       notes: normalizeOptionalText(source.notes),
       purchasePrice: price,
-      quantity
+      quantity,
+      specification: normalizeOptionalText(source.specification),
+      unit: normalizeOptionalText(source.unit)
     },
     ok: true
   };

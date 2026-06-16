@@ -26,7 +26,9 @@ describe("AI candidate parser", () => {
               value: "冰箱"
             },
             name: { confidence: 0.92, source: "image", value: "香蕉" },
-            quantity: { confidence: 0.62, source: "image", value: 1 }
+            quantity: { confidence: 0.62, source: "image", value: 1 },
+            specification: { confidence: 0.7, source: "image", value: "约一串" },
+            unit: { confidence: 0.62, source: "image", value: "串" }
           }
         ],
         warnings: []
@@ -40,7 +42,9 @@ describe("AI candidate parser", () => {
     expect(result.data.candidates[0]).toMatchObject({
       expiryDays: { source: "inference", value: 7 },
       locationName: { source: "inference", value: "冰箱" },
-      name: { source: "image", value: "香蕉" }
+      name: { source: "image", value: "香蕉" },
+      specification: { source: "image", value: "约一串" },
+      unit: { source: "image", value: "串" }
     });
   });
 
@@ -82,7 +86,9 @@ describe("AI candidate parser", () => {
           name: { confidence: 0.55, source: "order", value: "洗衣液" },
           purchaseDate: { confidence: 0.82, source: "order", value: "2026-06-02" },
           purchasePrice: { confidence: 0.38, source: "order", value: 39.9 },
-          quantity: { confidence: 0.9, source: "user", value: 3 }
+          quantity: { confidence: 0.9, source: "user", value: 3 },
+          specification: { confidence: 0.82, source: "order", value: "3L" },
+          unit: { confidence: 0.72, source: "order", value: "桶" }
         }
       ],
       warnings: []
@@ -95,7 +101,9 @@ describe("AI candidate parser", () => {
     expect(result.data.candidates[0]).toMatchObject({
       purchaseDate: { source: "order", value: "2026-06-02" },
       purchasePrice: { confidence: 0.38, source: "order", value: 39.9 },
-      quantity: { source: "user", value: 3 }
+      quantity: { source: "user", value: 3 },
+      specification: { source: "order", value: "3L" },
+      unit: { source: "order", value: "桶" }
     });
     expect(result.data.warnings).toContain("洗衣液 的采购价格置信度较低，请人工确认。");
   });

@@ -28,9 +28,13 @@ describe("AI structured contract", () => {
     expect(prompt).toContain("冰箱、储物间");
     expect(prompt).toContain("优先识别水果");
     expect(prompt).toContain("图片中没有出现的保质期");
+    expect(prompt).toContain("数量单位");
+    expect(prompt).toContain("规格");
     expect(prompt).toContain('"candidates"');
     expect(prompt).toContain('"name"');
     expect(prompt).toContain('"value":"香蕉"');
+    expect(prompt).toContain('"unit"');
+    expect(prompt).toContain('"specification"');
     expect(prompt).toContain('"source":"image"');
     expect(prompt).toContain('"confidence":0.9');
   });
@@ -48,9 +52,13 @@ describe("AI structured contract", () => {
     expect(prompt).toContain("冰箱、储物间");
     expect(prompt).toContain("价格");
     expect(prompt).toContain("采购日期");
+    expect(prompt).toContain("数量单位");
+    expect(prompt).toContain("规格");
     expect(prompt).toContain("source: \"order\"");
     expect(prompt).toContain('"purchasePrice"');
     expect(prompt).toContain('"purchaseDate"');
+    expect(prompt).toContain('"unit"');
+    expect(prompt).toContain('"specification"');
     expect(prompt).toContain('"source":"order"');
   });
 
@@ -65,6 +73,8 @@ describe("AI structured contract", () => {
     expect(schemaText).toContain("candidates");
     expect(schemaText).toContain("warnings");
     expect(schemaText).toContain("confidence");
+    expect(schemaText).toContain("unit");
+    expect(schemaText).toContain("specification");
     expect(schemaText).toContain('"image"');
     expect(schemaText).toContain('"order"');
     expect(schemaText).toContain('"inference"');

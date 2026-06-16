@@ -14,7 +14,9 @@ describe("item input validation", () => {
         notes: "  优先饮用  ",
         purchaseDate: "2026-05-31",
         purchasePrice: 18.9,
-        quantity: 2
+        quantity: 2,
+        specification: "  500ML  ",
+        unit: "  盒  "
       })
     ).toEqual({
       data: {
@@ -27,7 +29,9 @@ describe("item input validation", () => {
         notes: "优先饮用",
         purchaseDate: new Date("2026-05-31T00:00:00.000Z"),
         purchasePrice: 18.9,
-        quantity: 2
+        quantity: 2,
+        specification: "500ML",
+        unit: "盒"
       },
       ok: true
     });
@@ -45,7 +49,9 @@ describe("item input validation", () => {
         notes: null,
         purchaseDate: null,
         purchasePrice: null,
-        quantity: 1
+        quantity: 1,
+        specification: null,
+        unit: null
       },
       ok: true
     });

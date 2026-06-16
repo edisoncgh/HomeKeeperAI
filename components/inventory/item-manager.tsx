@@ -3,6 +3,7 @@
 import { FormEvent, useMemo, useState } from "react";
 import { CheckCircle2, ImageIcon, PackagePlus, Pencil, Plus, RefreshCw, Trash2, X } from "lucide-react";
 import { OrderParsingPanel, PhotoRecognitionPanel } from "@/components/ai";
+import { ExpiryDateField } from "@/components/inventory/expiry-date-field";
 import { ItemImageManager } from "@/components/inventory/item-image-manager";
 import { ItemListControls, type PaginationView } from "@/components/inventory/item-list-controls";
 import { Button, Card, CardDescription, CardHeader, CardTitle, Input, Tag } from "@/components/ui";
@@ -12,6 +13,7 @@ import {
   defaultItemListFilters,
   emptyItemForm,
   formatDateTimeToMinute,
+  formatQuantityWithUnit,
   getItemStatusMeta,
   parseItemFormFromView,
   type ItemFormState, type ItemListFilterState,
@@ -63,7 +65,9 @@ export interface ItemView {
   purchasePrice: null | number;
   quantity: number;
   records?: ItemRecordView[];
+  specification: null | string;
   status: ItemStatusValue;
+  unit: null | string;
   updatedAt: string;
 }
 
@@ -451,7 +455,7 @@ function DesktopItemTable({
         {items.map((item) => (
           <button className={getItemRowClassName(item.id === selectedItemId)} key={item.id} onClick={() => onSelect(item)} type="button">
             <ItemListPrimary item={item} loading={loadingId === item.id} />
-            <span className="text-sm font-semibold text-text-primary">{item.quantity}</span>
+        <span className="text-sm font-semibold text-text-primary">{formatQuantityWithUnit(item.quantity, item.unit)}</span>
             <TaxonomyPill item={item.category} fallback="未分类" />
             <TaxonomyPill item={item.location} fallback="未设置" />
             <StatusTag status={item.status} />
@@ -484,7 +488,7 @@ function ItemListPrimary({ item, loading }: { item: ItemView; loading: boolean }
           <span className="truncate text-base font-semibold text-text-primary md:text-sm">{item.name}</span>
           {loading ? <RefreshCw aria-hidden className="animate-spin text-primary" size={14} /> : null}
         </span>
-        <span className="mt-1 block truncate text-xs text-text-tertiary">{item.description || "暂无描述"}</span>
+        <span className="mt-1 block truncate text-xs text-text-tertiary">{getItemSubtitle(item)}</span>
       </span>
     </span>
   );
@@ -493,7 +497,8 @@ function ItemListPrimary({ item, loading }: { item: ItemView; loading: boolean }
 function ItemListMeta({ item }: { item: ItemView }) {
   return (
     <span className="mt-3 flex flex-wrap items-center gap-2">
-      <Tag>{item.quantity} 件</Tag>
+      <Tag>{formatQuantityWithUnit(item.quantity, item.unit)}</Tag>
+      {item.specification ? <Tag>{item.specification}</Tag> : null}
       <TaxonomyPill item={item.category} fallback="未分类" />
       <TaxonomyPill item={item.location} fallback="未设置" />
       <StatusTag status={item.status} />
@@ -616,14 +621,18 @@ function ItemFormFields({
   return (
     <>
       <Input label="名称" name="name" onChange={(event) => onChange({ ...form, name: event.target.value })} placeholder="例如：牛奶" value={form.name} />
-      <Input label="数量" min={1} name="quantity" onChange={(event) => onChange({ ...form, quantity: event.target.value })} type="number" value={form.quantity} />
+      <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(120px,0.55fr)]">
+        <Input label="数量" min={1} name="quantity" onChange={(event) => onChange({ ...form, quantity: event.target.value })} type="number" value={form.quantity} />
+        <Input label="数量单位" name="unit" onChange={(event) => onChange({ ...form, unit: event.target.value })} placeholder="例如：桶、箱、瓶" value={form.unit} />
+      </div>
+      <Input label="规格" name="specification" onChange={(event) => onChange({ ...form, specification: event.target.value })} placeholder="例如：500ML、3L、12瓶/箱" value={form.specification} />
       <div className="grid gap-3 sm:grid-cols-2">
         <SelectField label="分类" name="categoryId" onChange={(value) => onChange({ ...form, categoryId: value })} options={categories} placeholder="未分类" value={form.categoryId} />
         <SelectField label="位置" name="locationId" onChange={(value) => onChange({ ...form, locationId: value })} options={locations} placeholder="未设置" value={form.locationId} />
       </div>
       <TextareaField label="描述" name="description" onChange={(value) => onChange({ ...form, description: value })} placeholder="补充规格、口味或用途" value={form.description} />
       <div className="grid gap-3 sm:grid-cols-2">
-        <Input label="保质期" name="expiryDate" onChange={(event) => onChange({ ...form, expiryDate: event.target.value })} type="date" value={form.expiryDate} />
+        <ExpiryDateField name="expiryDate" onChange={(value) => onChange({ ...form, expiryDate: value })} value={form.expiryDate} />
         <Input label="采购日期" name="purchaseDate" onChange={(event) => onChange({ ...form, purchaseDate: event.target.value })} type="date" value={form.purchaseDate} />
       </div>
       <Input label="采购价格" min={0} name="purchasePrice" onChange={(event) => onChange({ ...form, purchasePrice: event.target.value })} placeholder="例如：18.9" step="0.01" type="number" value={form.purchasePrice} />
@@ -689,7 +698,8 @@ function ItemDetailPanel({
 
 function ItemDetailGrid({ item }: { item: ItemView }) {
   const details = [
-    ["数量", `${item.quantity} 件`],
+    ["数量单位", formatQuantityWithUnit(item.quantity, item.unit)],
+    ["规格", item.specification || "未记录"],
     ["分类", item.category?.name ?? "未分类"],
     ["位置", item.location?.name ?? "未设置"],
     ["保质期", formatDisplayDate(item.expiryDate)],
@@ -1072,6 +1082,14 @@ function getItemRowClassName(isActive: boolean) {
 
 function formatDisplayDate(value: null | string) {
   return value ? value.slice(0, 10) : "未记录";
+}
+
+function getItemSubtitle(item: Pick<ItemView, "description" | "specification">) {
+  if (item.description && item.specification) {
+    return `${item.specification} · ${item.description}`;
+  }
+
+  return item.description || item.specification || "暂无描述";
 }
 
 function getRecordLabel(record: ItemRecordView) {

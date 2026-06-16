@@ -91,7 +91,13 @@ describe("item API helpers", () => {
         })
       })
     );
-    expect(mocks.prisma.item.findMany.mock.calls[0][0].where.OR).toHaveLength(3);
+    expect(mocks.prisma.item.findMany.mock.calls[0][0].where.OR).toEqual([
+      { name: { contains: "牛奶" } },
+      { description: { contains: "牛奶" } },
+      { notes: { contains: "牛奶" } },
+      { specification: { contains: "牛奶" } },
+      { unit: { contains: "牛奶" } }
+    ]);
   });
 
   it("rejects missing category references before writing", async () => {

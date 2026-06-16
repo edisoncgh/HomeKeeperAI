@@ -29,7 +29,9 @@ model Item {
   expiryDate    DateTime?
   purchaseDate  DateTime?
   purchasePrice Float?
+  specification String?
   notes         String?
+  unit          String?
   status        ItemStatus   @default(NORMAL)
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt

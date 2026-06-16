@@ -24,6 +24,8 @@ export interface ItemFormState {
   purchaseDate: string;
   purchasePrice: string;
   quantity: string;
+  specification: string;
+  unit: string;
 }
 
 export const emptyItemForm: ItemFormState = {
@@ -36,7 +38,9 @@ export const emptyItemForm: ItemFormState = {
   notes: "",
   purchaseDate: "",
   purchasePrice: "",
-  quantity: "1"
+  quantity: "1",
+  specification: "",
+  unit: ""
 };
 
 export const defaultItemListFilters: ItemListFilterState = {
@@ -71,7 +75,9 @@ export function buildItemPayload(form: ItemFormState) {
     notes: normalizeOptionalString(form.notes),
     purchaseDate: normalizeOptionalString(form.purchaseDate),
     purchasePrice: parseOptionalNumber(form.purchasePrice),
-    quantity: Number(form.quantity)
+    quantity: Number(form.quantity),
+    specification: normalizeOptionalString(form.specification),
+    unit: normalizeOptionalString(form.unit)
   };
 }
 
@@ -131,6 +137,8 @@ export function parseItemFormFromView(item: {
   purchaseDate: null | string;
   purchasePrice: null | number;
   quantity: number;
+  specification: null | string;
+  unit: null | string;
 }): ItemFormState {
   return {
     categoryId: item.categoryId ? String(item.categoryId) : "",
@@ -142,8 +150,15 @@ export function parseItemFormFromView(item: {
     notes: item.notes ?? "",
     purchaseDate: formatDateForInput(item.purchaseDate),
     purchasePrice: item.purchasePrice === null ? "" : String(item.purchasePrice),
-    quantity: String(item.quantity)
+    quantity: String(item.quantity),
+    specification: item.specification ?? "",
+    unit: item.unit ?? ""
   };
+}
+
+export function formatQuantityWithUnit(quantity: number, unit: null | string) {
+  const normalized = unit?.trim();
+  return `${quantity} ${normalized || "件"}`;
 }
 
 function normalizeOptionalString(value: string) {

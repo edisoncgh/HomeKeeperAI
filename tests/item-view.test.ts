@@ -35,7 +35,9 @@ describe("buildItemPayload", () => {
       notes: "",
       purchaseDate: "",
       purchasePrice: "18.9",
-      quantity: "3"
+      quantity: "3",
+      specification: "  500ML  ",
+      unit: "  盒  "
     };
 
     expect(buildItemPayload(form)).toEqual({
@@ -48,7 +50,9 @@ describe("buildItemPayload", () => {
       notes: null,
       purchaseDate: null,
       purchasePrice: 18.9,
-      quantity: 3
+      quantity: 3,
+      specification: "500ML",
+      unit: "盒"
     });
   });
 });

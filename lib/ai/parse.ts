@@ -22,7 +22,9 @@ const FIELD_SPECS = {
   notes: stringSpec("备注"),
   purchaseDate: dateSpec("采购日期"),
   purchasePrice: numberSpec("采购价格", 0),
-  quantity: integerSpec("数量", 1)
+  quantity: integerSpec("数量", 1),
+  specification: stringSpec("规格"),
+  unit: stringSpec("数量单位")
 } satisfies Record<CandidateKey, FieldSpec>;
 
 export function parseAiCandidateResponse(input: unknown): ParseAiCandidateResult {

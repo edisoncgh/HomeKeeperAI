@@ -27,9 +27,26 @@ describe("ItemManager mobile UI", () => {
     expect(html).toContain("当前筛选");
     expect(html).toContain("全部物品");
   });
+
+  it("renders unit, specification, and the enhanced expiry date picker affordance", () => {
+    vi.stubGlobal("React", React);
+    const html = renderToStaticMarkup(createElement(ItemManager, buildProps()));
+    const formHtml = renderToStaticMarkup(createElement(ItemManager, buildProps({ initialItems: [] })));
+
+    expect(html).toContain("数量单位");
+    expect(html).toContain("规格");
+    expect(html).toContain("2 桶");
+    expect(html).toContain("3L");
+    expect(formHtml).toContain("快速选择年份");
+    expect(formHtml).toContain("选择年份");
+  });
 });
 
-function buildProps() {
+function buildProps(overrides: Partial<ReturnType<typeof buildBaseProps>> = {}) {
+  return { ...buildBaseProps(), ...overrides };
+}
+
+function buildBaseProps() {
   return {
     categories: [{ color: null, icon: "🥛", id: 1, name: "食品" }],
     initialFilters: defaultItemListFilters,
@@ -57,7 +74,9 @@ function buildItem(): ItemView {
     purchasePrice: 18.9,
     quantity: 2,
     records: [],
+    specification: "3L",
     status: "NORMAL",
+    unit: "桶",
     updatedAt: "2026-06-13T00:00:00.000Z"
   };
 }

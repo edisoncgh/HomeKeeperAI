@@ -19,6 +19,8 @@ export interface AiItemCandidate {
   purchaseDate?: AiCandidateField<string>;
   purchasePrice?: AiCandidateField<number>;
   quantity?: AiCandidateField<number>;
+  specification?: AiCandidateField<string>;
+  unit?: AiCandidateField<string>;
 }
 
 export interface AiCandidateResponse {
@@ -56,7 +58,9 @@ export const AI_ITEM_CANDIDATE_JSON_SCHEMA = {
           notes: stringFieldSchema,
           purchaseDate: dateFieldSchema,
           purchasePrice: priceFieldSchema,
-          quantity: quantityFieldSchema
+          quantity: quantityFieldSchema,
+          specification: stringFieldSchema,
+          unit: stringFieldSchema
         },
         required: ["name"],
         type: "object"

@@ -5,7 +5,8 @@ import path from "node:path";
 const migrationFiles = [
   "prisma/migrations/20260530023000_init/migration.sql",
   "prisma/migrations/20260602021500_add_app_settings/migration.sql",
-  "prisma/migrations/20260611000100_add_item_images/migration.sql"
+  "prisma/migrations/20260611000100_add_item_images/migration.sql",
+  "prisma/migrations/20260616000100_add_item_unit_specification/migration.sql"
 ];
 let prisma;
 
@@ -38,6 +39,15 @@ async function tableExists(tableName) {
   return rows.length > 0;
 }
 
+async function columnExists(tableName, columnName) {
+  if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(tableName)) {
+    throw new Error(`Unsafe table name: ${tableName}`);
+  }
+
+  const rows = await prisma.$queryRawUnsafe(`PRAGMA table_info("${tableName}")`);
+  return rows.some((row) => row.name === columnName);
+}
+
 async function applyMigration(migrationPath) {
   for (const statement of readSqlStatements(migrationPath)) {
     await prisma.$executeRawUnsafe(statement);
@@ -62,6 +72,11 @@ async function main() {
   if (!(await tableExists("ItemImage"))) {
     await applyMigration(migrationFiles[2]);
     console.log("SQLite ItemImage schema initialized.");
+  }
+
+  if (!(await columnExists("Item", "unit")) || !(await columnExists("Item", "specification"))) {
+    await applyMigration(migrationFiles[3]);
+    console.log("SQLite item unit/specification schema initialized.");
     return;
   }
 

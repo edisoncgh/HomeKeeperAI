@@ -130,6 +130,14 @@ function CandidateFormFields(props: {
         value={confirmation.form.quantity}
         onChange={onChange}
       />
+      <TextInputField field="unit" label="数量单位" meta={confirmation.fieldMeta.unit} value={confirmation.form.unit} onChange={onChange} />
+      <TextInputField
+        field="specification"
+        label="规格"
+        meta={confirmation.fieldMeta.specification}
+        value={confirmation.form.specification}
+        onChange={onChange}
+      />
       <TaxonomySelect field="categoryId" label="分类" meta={confirmation.fieldMeta.categoryId} options={props.categories} value={confirmation.form.categoryId} onChange={onChange} />
       <TaxonomySelect field="locationId" label="位置" meta={confirmation.fieldMeta.locationId} options={props.locations} value={confirmation.form.locationId} onChange={onChange} />
       <TextInputField field="expiryDate" inputProps={{ type: "date" }} label="保质期" meta={confirmation.fieldMeta.expiryDate} value={confirmation.form.expiryDate} onChange={onChange} />

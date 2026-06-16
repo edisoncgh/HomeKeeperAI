@@ -27,6 +27,13 @@ const itemImagesMigrationPath = path.join(
   "20260611000100_add_item_images",
   "migration.sql"
 );
+const itemUnitSpecificationMigrationPath = path.join(
+  projectRoot,
+  "prisma",
+  "migrations",
+  "20260616000100_add_item_unit_specification",
+  "migration.sql"
+);
 
 function run(command, args) {
   return spawnSync(command, args, {
@@ -60,6 +67,15 @@ function getTableList() {
   return result.status === 0 ? result.stdout : "";
 }
 
+function hasItemColumn(columnName) {
+  if (!fs.existsSync(databasePath)) {
+    return false;
+  }
+
+  const result = run("sqlite3", [databasePath, "PRAGMA table_info('Item');"]);
+  return result.status === 0 && result.stdout.includes(`|${columnName}|`);
+}
+
 function applySqliteMigration() {
   fs.mkdirSync(path.dirname(databasePath), { recursive: true });
 
@@ -84,6 +100,11 @@ function applyPendingSqliteMigrations() {
   if (!refreshedTables.includes("ItemImage")) {
     runSqliteMigration(itemImagesMigrationPath);
     console.log("SQLite ItemImage migration applied.");
+  }
+
+  if (!hasItemColumn("unit") || !hasItemColumn("specification")) {
+    runSqliteMigration(itemUnitSpecificationMigrationPath);
+    console.log("SQLite item unit/specification migration applied.");
     return;
   }
 
