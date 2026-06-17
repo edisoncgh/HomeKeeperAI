@@ -59,8 +59,8 @@ coverage/
 #//////////////////////////
 #Runtime data
 #//////////////////////////
-data/
-uploads/
+/data/
+/uploads/
 /backups/
 prisma/*.db
 prisma/*.db-journal
